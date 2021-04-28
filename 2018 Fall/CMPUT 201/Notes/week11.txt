@@ -1,0 +1,671 @@
+Week 11 (L28/29/30)
+
+Topics
+
+· Data encapsulation, inheritance, polymorphism
+· Operator overloading
+· Function templates and class templates
+· Creating class templates for container types
+
+============================================================================
+
+Lecture 28 Agenda
+
+- Quiz 5
+
+- Quiz 5 Solutions
+
+- Introduction to software engineering in C++
+
+=========================================================================
+
+Quiz Solutions:
+
+Explain the following concepts and provide one example for each:
+
+A) Data encapsulation
+
+  Bundling data with methods operating on it, while restricting access to some
+  of the object's components. This way, unauthorized parties can't change data
+  and implementations may change without affecting application code.
+
+  Example: 
+
+  class Point             equivalent to:    struct Point {
+  {                                           int x, y;
+  public:                                   };
+    int x, y;
+  };
+
+  Point p;
+  p.x = 5; // direct access - dangerous
+  
+  // more robust - but maybe overkill because Point is a simple
+  // class that just contains coordinates - i.e., there is no state 
+  // to maintain and direct access can't wreck the data structure
+
+  class Point 
+  {
+  public:
+  
+    // accessible
+    Point() { x = y = 0; }
+
+    // getters and setters
+    
+    int get_x() const { return x; }
+    void set_x(int v) { x = v; }
+
+    int get_y() const { return y; }
+    void set_y(int v) { y = v; }
+
+  private:
+    // hidden
+    int x, y;  
+  };
+
+
+============================================================================
+
+B) Inheritance
+
+Inheritance models an "is-a" relationship between objects. In C++, derived
+classes inherit data and function members from base classes, and may add data
+and functions and override base class functions
+
+Example:
+
+// base class
+class Animal 
+{
+public:
+  double weight;
+  void act() { printf("?\n"); }
+};
+
+// a Bear is-an Animal
+class Bear : public Animal
+{
+ public:
+  // inherits weight 
+
+  // adds:
+  int claw_length;
+
+  // overrides Animal::act()
+  void act() { printf("roar\n"); }
+}
+
+Bear b; b.weight = 150; b.claw_length = 5; b.act();  // prints roar
+
+============================================================================
+
+C) Polymorphism
+
+[ greek: poly = many, morphe' = shape ]
+
+Polymorphism in CS means that values of different data types can be handled
+using a uniform interface. C++ supports polymorphism for classes. When
+declared virtual, member functions can be invoked via base class
+pointers. This way, pointers to derived class objects can be stored in
+containers, through which object member functions can be invoked
+
+Example:
+
+  // base class
+  class Animal 
+  {
+  public:
+    double weight;
+>>> virtual void act() { printf("?"); }
+    // ...
+  };
+
+  // derived classes
+  class Bear : public Animal // "a Bear is an Animal"
+  {
+  public:
+    void act() override { printf("roar"); }
+    // ...
+  };
+
+  // ...
+
+  Animal *animals[N]; // array of base class pointers
+  animals[0] = new Bear;
+  animals[1] = new Pig;
+  // ...
+
+  // let all animals act
+  for (int i=0; i < N; ++i) {
+    animals[i]->act();  
+    // invokes Bear::act() if animals[i] points to a bear, prints roar
+    // invokes Pig::act()  if animals[i] points to a pig, prints oink
+    // etc.
+  }
+
+
+   More details:
+
+   Polymorphic class objects contain an inaccessible pointer to class
+   information which allows the runtime system to call the correct member
+   functions when being invoked through base class pointers
+
+   Consider p->act() where is an Animal pointer.
+
+   How is the runtime system able to call the right function?
+
+   Polymorphism here means, that 
+
+     Animal *p = new Bear;
+     p->act();
+
+   calls Bear::act (printing roar) and 
+
+     Animal *p = new Pig;
+     p->act();
+
+   calls Pig::act (printing oink)
+
+   For this to work, act() has to be virtual in the base class Animal, and Bear
+   and Pig must inherit from Animal
+
+   Here is how the runtime invokes virtual functions, assuming act() is the
+   first virtual function:
+                                        
+     p->act();   gets translated into   (*(p->vftp[0]))();
+                                              |
+                                       Address of act stored in the first table entry vftp[0].
+                                       Each virtual function has its own table index
+
+   [ (*f)(); for function pointer f calls the function f points to ]
+
+   All Bear objects vftps point to the Bear virtual function table (vft), and
+   all Pig objects point to the Pig vft
+
+   Above code is the same for all calls p->act(); but the respective table
+   entry decides what actual function is being called
+
+   [ Actually, C++ class member functions also need to have access to the
+     object itself to manipulate local data. For this reason, above line in
+     reality looks like this: (*(p->vftp[0]))(p); , i.e. the "this" pointer
+     (p) is always passed as the first parameter to member functions ]
+   
+============================================================================
+
+D) Operator overloading allows us to define what actions are to be performed
+   when operators appear in new type contexts. This makes programs more
+   readable
+
+   Example:
+
+   Matrix operator+(const Matrix &a, const Matrix &b)
+   {
+     ...
+   }
+
+   With this, matrices can be added like numbers:
+
+   Matrix A, B, C = A + B;  // invokes above code
+
+
+============================================================================
+
+Lecture 29 Agenda
+
+- More intros
+
+- Classroom Problems
+
+============================================================================
+
+
+Problem 1: Review the following class. Is it designed well? How can it be
+           improved?
+
+  struct Employee
+  {
+    char *given_name;
+    char *surname;
+    double salary;     
+    int date_of_birth; 
+  };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution: BAD design - looks like C code
+
+  - No constructor, destructor. No data member is initialized
+    Who allocates and destroys the C-strings? 
+    Adding a constructor and destructor makes the class more robust
+
+  - Everything is public. Therefore, any user can change any data member.
+    Therefore, user code is affected when class changes. It is much better
+    to restrict access
+
+  - No comments! E.g., do the pointers share or own their data?
+
+  Better C++ class design:
+
+
+  class Employee
+  {
+  public:
+    // public interface
+    Employee() { ... }
+    ~Employee() { ... }
+
+    void set_given_name(const char *name) {
+      ...
+    }
+
+    const char *get_given_name() const {
+      ...
+    }
+
+    ...
+    
+  private: 
+    // implementation details
+    char *given_name;   // owns string
+    char *surname;      // owns string
+    double salary;      // annual income
+    int date_of_birth;  // day since Jan-1-1800
+  };
+
+============================================================================
+
+Problem 2: Consider
+
+  struct X {
+    int a;
+    virtual void foo() { printf("X::foo "); }
+  };
+
+  struct Y : public X {
+    int b;
+    void foo() override { printf("Y::foo "); }
+  };
+
+  X *px = new X, *px2;
+  Y *py = new Y, *py2;
+  py->a = 0; px->b = 5; py->b = 1; // (1)
+  px->foo(); py->foo();            // (2)
+  px2 = py;  px2->foo();           // (3)
+  py2 = px;  py2->foo();           // (4)
+  delete px2;                      // (5)
+
+A. How are objects of type X and Y laid out in memory?
+   What is sizeof(X) and sizeof(Y) on a 64-bit machine?
+
+B. Which lines compile? Which don't? What is printed in each correct line?
+
+C. Which destructor is called in line (5)?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+A.   X objects              Y objects
+
+    | vftp    | 8           | vftp    | 8
+    | a (int) | 4           | a (int) | 4     Y inherits all data from X
+                            | b (int) | 4     and adds member b
+
+    sizeof(X) = 12          sizeof(Y) = 16
+
+
+   Class X is polymorphic because it contains a virtual function. That means
+   that class Y which "is-a" X, is also polymorphic. So, a hidden virtual
+   function table pointer is added.
+
+
+============================================================================
+
+B.  (1) px->b = 5; is illegal: X has no data member b
+    (2) OK
+    (3) px2 = py; legal, because Ys are Xs, i.e., *py has all X components.
+              This is called "object slicing" - only X components accessible
+              through px2, except for member functions which are dispatched
+              polymorphically
+
+    (4) py2 = px; is illegal, because Y has data member b, but X hasn't. Thus,
+              py2->b = 5; after py2 = px; would refer to a non-existent
+              component
+    (5) OK
+
+    Output:  (2): X::foo Y::foo
+
+             (3): Y::foo (polymorphism, px2 points to a Y. Because foo is virtual, the
+                          correct Y function is invoked)
+
+             (4): illegal
+
+============================================================================
+
+C. px2 points to a Y object. We therefore would expect that 
+
+   delete px2; 
+  
+   calls ~Y - but it doesn't, because px2 if of type X*.
+   Because ~X is not virtual, ~X is called
+
+   struct X {
+     // ...
+     virtual ~X() { }
+   };
+
+   solves the problem. delete px2 now calls ~Y
+
+   RULE: if a class is polymorphic, its destructor must be virtual.
+         Modern compilers warn you if this is not the case
+
+ 
+============================================================================
+
+Problem 3
+
+A. Consider class Matrix. How would you implement basic arithmetic operations
+   (+,-,*) if no operator overloading was supported?
+
+B. Using those operations, how would A * (B - C * D) be implemented for
+   matrices A,B,C,D ?
+
+
+
+
+
+
+
+
+
+
+
+
+Solution: 
+
+A.
+
+  Matrix add (const Matrix &a, const Matrix &b) { ... }
+  Matrix sub (const Matrix &a, const Matrix &b) { ... }
+  Matrix mult (const Matrix &a, const Matrix &b) { ... }
+
+B.
+
+  A * (B - C * D)  =>    mult(A, sub(B, mult(C, D)))
+
+  Which representation is better? ;-)
+
+============================================================================
+
+Lecture 30 Agenda
+
+- Classroom problems
+
+============================================================================
+
+Problem 4
+
+Recall how function templates look:
+
+// return maximum of a and b
+template <typename T>
+T max(T a, T b)
+{
+  return a > b ? a : b;
+}
+
+int a, b, c;  
+c = max(a, b);  // calls int max(int a, int b);
+
+double a, b, c;
+c = max(a, b);  // calls double max(double a, double b);
+
+struct Foo { int bar; };
+
+bool operator>(const Foo &a, const Foo &b) {
+  return a.bar > b.bar;
+}
+
+Foo a, b, c;
+c = max(a, b);
+
+The compiler infers type T from the function call, then compiles the function
+template for that type, and then creates a function call to the newly created
+function instance. So, we only have to write code once
+
+Identical code, different action => polymorphism
+
+Implement a function template that returns the minimum element stored in an
+array
+
+Application:  
+
+int A[] = { 1, 2, 3, 4 };
+int min1 = min(A, 4);     // calls int min(int[], int); returns 1	
+
+double B[] = { 1.0, 2.0, 3.0, 4.0 };
+double min2 = min(B, 4);  // calls double min(double[], int); returns 1.0
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+
+What's wrong with this "solution" ?
+
+   template <typename T>
+   T min(const T A[], int n)
+   {
+     assert(n > 0);
+     const T *m = &A[0]; // m points to current minimum
+     for (int i=1; i < n; ++i) {
+       if (*m < A[i]) {
+         *m = &A[i];     // new minimum
+       }
+     }
+     return *m;
+   }
+
+
+Easier to read:
+
+   template <typename T>
+   T min(const T A[], int n)
+   {
+     assert(n > 0);
+     int min_index = 0;
+     for (int i=1; i < n; ++i) {
+       if (A[i] < A[min_index]) {
+         min_index = i;
+       }
+     }
+     return A[min_index];
+   }
+
+============================================================================
+
+Problem 5
+
+Explain why the max function template below doesn't work for C-strings as
+expected. How can this be fixed?
+
+   template <typename T>
+   T max(T a, T b) {
+     return a > b ? a : b;
+   }
+
+   using ccptr = const char *;
+   ccptr m = max("foo", "bar");  // (*)
+
+   What happens here?
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+ccptr max(ccptr a, ccptr b) will be called, comparing POINTERS rather than
+CHARACTER SEQUENCES. So, the result is arbitrary and has nothing to do with
+the actual words which we wanted to compare
+
+The solution is to provide a specialization for type ccptr that compares
+strings:
+
+// returns maximal string
+ccptr max(ccptr a, ccptr b) {
+  return strcmp(a, b) > 0 ? a : b; 
+}
+
+This function will be invoked in line (*), because the compiler chooses the
+most specialized function
+
+============================================================================
+
+Problem 6
+
+A. What is the advantage of class templates? Is there a disadvantage?
+
+B. Explain how to turn any container class into a class template that can
+   store elements of arbitrary types
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+A.
+
+Advantage: we only have to provide implementations once and then can use class
+templates with arbitrary types. No code duplication => code more compact and
+less error-prone.
+
+Disadvantages: longer compilation time (because classes have to be compiled
+mulitple times) and code bloat (multiple instantiations of class templates)
+
+
+B.
+
+- Identify type(s) of elements stored in container
+- Replace all occurences of the type(s) in element context by typenames (T,...)
+- Add template <typename T> (or <typename T, typename ...>) in front of class/struct
+
+Example:  Pair template - start with int-pair
+
+
+struct Pair
+{
+  int first;
+  int second;
+
+  Pair(int f, int s) {
+    first = f;
+    second = s;
+  }
+};
+
+
+Pair<double, int> p(3.0, 5);
+
+Pair<char, Foo> p('x', Foo());
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+- identify element types: int, int
+- replace them with type parameters F (first element type), S (second element type)
+- use const references to avoid copying into local variables (F, S could be big)
+- add template decoration
+
+template <typename F, typename S>
+struct Pair 
+{
+  F first;
+  S second;
+
+  Pair(const F &f, const S &s) {
+    first = f;
+    second = s;
+  }
+};
+
+Application:
+
+ Pair<int, double> p1(3, 1.0);
+ Pair<bool,int>    p2(false, 3);
+
+

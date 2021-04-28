@@ -1,0 +1,721 @@
+Week 07 (L17/18)
+
+Topics
+
+· Global and static variables
+· Implementing abstract data types in C and C++
+· C++ classes, member functions, constructors and destructors
+· Vector and SList implementation  
+
+============================================================================
+
+Lecture 17 Agenda
+
+- Quiz 6A + Solutions
+- Classroom Problem
+
+============================================================================
+
+[ C/C++ code for Vector and SList in lec-week07-code as reference ]
+
+=========================================================================
+
+Quiz 6A:
+
+1. Describe the following terms in at least two sentences each:
+
+- Global Variable
+- Static Local Variable
+- Class constructor and destructor
+- Abstract Data Type
+
+----------
+
+2. Complete the function below that is supposed to give the caller access to
+   the i-th element of a Vector after the index has been checked in debug
+   mode:
+
+_____ Vector::elem(_____)
+{
+
+
+
+}
+
+Vector v(10);
+v.elem(0) = 10; // call example
+
+----------
+
+3. Suppose the number of elements wasn't stored in the SList class. Write
+   member function size that computes the number of elements instead
+
+============================================================================
+
+Quiz Solutions:
+
+1. Global Variables : 
+
+   Stored in data memory segment, accessible by all modules, C type global
+   variables are initialized with 0, should be avoided because global
+   variables can be changed accidentally anywhere in the code
+
+[explained the global variable concept, gave example]
+
+   Static Local Variables :
+
+   Get initialized when functions are called for the first time, outlive
+   duration of the function call and keep their values between calls
+
+[explained the static local variables, gave example]
+
+   Class constructor and destructor :
+
+   A constructor is called when a class object is created. The destructor is
+   called when such object is destroyed (going out of scope or deleted). This
+   mechanism is much safer than C's explicit init/free function calls
+
+[explained how constructors/destructors work, examples]
+
+   Abstract Data Type : 
+
+   A set of functions acting on data. The actual implementation is immaterial
+   - all what matters to users is the interface, i.e. the function
+   declarations. The function implementation can be changed without
+   influencing user code provided the interface isn't altered
+
+============================================================================
+
+2. Complete the function below that is supposed to give the caller access to
+   the i-th element of a Vector after the index has been checked in debug mode:
+
+int &Vector::elem(int i)
+{
+  assert(i >= 0 && i < n); // check index range in DEBUG mode (macro NDEBUG undefined)
+                           // program will terminate when Boolean condition is false
+                           // NOP if NDEBUG is defined
+  return elems[i];         // return *reference* to elems[i] (see return type)
+}
+
+Vector v(10);
+v.elem(0) = 10; // call example
+
+[ IMPORTANT: YOU NEED TO UNDERSTAND WHY WE RETURN A REFERENCE HERE! ]
+
+assert macro looks similar to this:
+
+#ifndef NDEBUG
+#define assert(x) { if (!x) { print error message ... exit ... }}
+#endif
+
+If NDEBUG is defined, no code will be generated (=> faster)
+
+g++ -DNDEBUG ... compiles code without assert runtime checks
+
+
+Vector::elem informs the compiler that it is about to see a definition of the
+elem member function of class Vector.
+
+Rule: in module (.c) files, prepend function names with <class-name>::
+
+============================================================================
+
+[explained Node and SList classes]
+
+3. Suppose the number of elements wasn't stored in the SList class. Write
+   member function size that computes the number of elements instead.
+
+int SList::size() const
+{
+  int count = 0;
+  Node *p = head;
+
+  // step through list and count nodes
+  // *p == 0 indicates end of list
+
+  while (p) {
+    ++count;
+    p = p->succ;   // continue with successor node (or 0)
+  }
+
+  return count;
+}
+
+============================================================================
+
+Problem 1 (Binary Trees)
+
+Tree based data structures are ubiquitous. For instance, trees can be used to
+implement efficient algorithms such as HeapSort or to represent sets and maps
+(e.g., Red-Black trees). Here, we are going to implement a binary tree data
+structure
+
+Binary tree nodes are similar to SList nodes - but instead of one successor
+they have two - called children: left and right
+
+With this, we can build trees like the following one, using the convention
+that we either point to a child (pointer != 0), or there is no child which is
+indicated by a 0 pointer. In this example each node stores an int value as
+well:
+
+                  1 <-- root
+                 / \ 
+                2   4
+               / \  |\ 
+              6   9 0 1
+
+A) Design class TreeNode that represents a node in a binary tree:
+
+  - In addition to left/right pointers, each node must also contain int data -
+    its payload
+
+  - The constructor must take three parameters - pointers to two children (or
+    0 if one or both don't exist), and the value stored in the node
+
+  - The destructor must destroy children recursively. I.e., delete root must
+    destroy the entire tree
+
+
+
+
+
+
+
+
+
+
+
+
+
+Sol.:
+
+
+TreeNode.h:
+-----------
+
+#pragma once
+
+class TreeNode
+{
+public:
+
+  // data members
+  int data;
+  TreeNode *left, *right;
+
+  // constructor declaration
+  TreeNode(TreeNode *l, TreeNode *r, int d);
+
+  // destructor declaration
+  ~TreeNode();
+};
+
+TreeNode.c:
+-----------
+
+#include "TreeNode.h"
+
+// constructor implementation
+TreeNode::TreeNode(TreeNode *l, TreeNode *r, int d)
+{
+  // initialize all node data members
+  left = l;
+  right = r;
+  data = d;
+}
+
+// destructor implementation
+TreeNode::~TreeNode()
+{
+  delete left;    // delete left sub-tree recursively
+  delete right;   // delete right sub-tree recursively
+}
+
+TreeNodeTest.c:
+---------------
+
+#include "TreeNode.h"
+
+int main()
+{
+  TreeNode *root = new TreeNode(0, 0, 5); // a single node, containing 5, without children
+  delete root;  // free node (calls destructor, before deallocating node's memory)
+  return 0;
+}
+
+===========================================================================
+
+Lecture 18 Agenda
+
+- (Mock) Quiz 6B + Solution
+- Classroom Problem
+
+===========================================================================
+
+Quiz 6B
+
+1. For class X, how to define the destructor of X in a .c file?
+
+2. For class X, explain what X *p = new X; exactly does - step by step
+
+3. When are static local variables initialized?
+
+4. What is the minimum amount of memory an SList with n nodes requires? Explain
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+============================================================================
+
+Quiz Solutions:
+
+1. For class X, how to define the destructor of X in a .c file?
+
+   In file X.c:
+
+   X::~X()      // destructor name ~X() prepended with X::
+   {
+     // destructor code goes here
+   }
+
+   (Write a small mock class X (X.h,X.c,testX.c) to check out how this works)
+   
+------
+
+2. For class X, explain what X *p = new X; exactly does - step by step
+
+   new X first allocates sizeof(X) bytes on the heap and then calls the X
+   constructor on this object. Finally, new returns the address of the object
+   which then is assigned to p
+
+   [ What does delete p; exactly do? ]
+
+------
+
+3. When are static local variables initialized?
+
+   The first time the function is called in which the static local variable is
+   defined
+
+------
+
+4. What is the minimum amount of memory an SList with n nodes requires? Explain
+
+   SList objects require 8 + 4 bytes (head pointer + element count) and each
+   node requires 8 + 4 bytes (successor pointer + int payload). The total
+   requirement for n nodes is therefore
+
+     12 + 12 n bytes
+
+
+============================================================================
+
+Problem 1 (continued)
+
+                a 1 <-- root
+                 / \ 
+              b 2   4 c
+               / \  |\ 
+              6   9 0 1
+              d   e f g       
+
+
+B) Construct the tree above on the heap using TreeNode code like so:
+
+   ...
+   TreeNode *root = new TreeNode(...,...,...);
+
+   // do something with tree rooted at root
+   ...
+
+   // remove entire tree recusively
+   delete root;
+
+C) Add member function "sum" that starting in a node visits all reachable
+   nodes and returns the sum of all values stored in the visited nodes (23 for
+   the tree above when called with root)
+
+   int TreeNode::sum() const
+   {
+     ...
+   }
+
+
+
+   E.g.        3 <--- root     root->sum() = 11 
+              / \
+             1   5
+                / \
+               0   2
+ 
+
+D) Add member function "height" that determines the maximum number of steps
+   required to get from this node to a leaf node, i.e. a node without
+   successors
+
+   int TreeNode::height() const
+   {
+     ...
+   }
+
+   E.g.        3 <--- root     root->height() = 3
+              / \
+             1   5 <--- A      A->height() = 2
+                / \
+               0   2
+                  /
+                 1 <--- B      B->height() = 0
+
+
+Solution: TreeNode*
+
+
+[ explained what happens when running calling new/delete:
+
+  - E.g., Foo *p = new Foo;
+
+    Here is what happens under the hood:
+
+      p = malloc(sizeof(Foo));  // allocate enough memory for Foo object
+      p->Foo();                 // call constructor
+
+
+  - E.g., delete p;
+
+    Here is what happens under the hood:
+
+      if (p) {
+        p->~Foo();               // call destructor
+        free(p);                 // release memory
+      }
+
+  So, for the TreeNode destructor:
+
+  TreeNode::~TreeNode()
+  {
+    delete left;
+    delete right;
+  }
+
+       o  <-- A
+      / \
+     o   o
+     B   C
+
+  delete A;
+
+  - first calls A->~TreeNode()
+  - which calls A->left->~TreeNode() = B->~TreeNode()
+  - B->~TreeNode() doesn't call anything because no children exist
+  - at the end memory for node B is released
+  - then A->right->~TreeNode() = C->~TreeNode() is called
+  - C->~TreeNode() doesn't call anything because no children exist
+  - at the end memory for node C is released
+  - at the very end memory for node A is released
+
+]
+
+============================================================================
+
+[ The material below has not been discussed in the lecture. It is NOT relevant
+  to the midterm exam, but will be relevant to upcoming lab exercises and the
+  final exam. Please study it
+]
+
+
+Matrix Representations
+----------------------
+
+As you know from linear algebra, n by n matrices can be added, subtracted,
+multiplied, and transposed. Here is a reminder of how this works for matrices
+A,B,C:
+
+  A + B = C     =>   Cᵢⱼ = Aᵢⱼ + Bᵢⱼ  
+
+    where Xᵢⱼ is the i-th row and j-th column entry of matrix X
+
+  A - B = C     =>   Cᵢⱼ = Aᵢⱼ - Bᵢⱼ
+
+  A * B = C     =>   Cᵢⱼ =     sum     Aᵢᵣ * Bᵣⱼ
+                            0 <= r < n
+
+  transpose(A) = C  =>  Cᵢⱼ = Aⱼᵢ   (mirror entries around main diagonal)
+
+  Examples (n = 2):             [ 0  1 ]       [ 4  5 ]  
+		         A =    [      ] , B = [      ]  
+		                [ 2  3 ]       [ 6  7 ]  
+
+           [ 4  6 ]              [ -4  -4 ]              [ 6   7 ] 
+  A + B =  [      ] ,   A - B =  [        ] ,   A * B =  [       ] 
+           [ 8 10 ]              [ -4  -4 ]              [ 26 31 ] 
+
+                  [ 0  2 ] 
+  transpose(A) =  [      ]       Reminder:  "row * column" (inner product)
+		  [ 1  3 ]       
+                             E.g. (A*B)₁₁ = A₁₀ * B₀₁ + A₁₁ * B₁₁ = 31
+                                            2  *  5 +  3  *  7   
+
+Representation 1
+----------------
+
+We consider n by m matrices with double floating point entries, which are used
+in many scientific computations. To represent them in C we can use
+multidimensional arrays:
+
+  double M[10][20]; // 10 rows, 20 colums
+  M[1][0] = 5;      // set element M₁₀ (row 1 and column 0) to 5
+
+However, this only works with sizes that are (small) compile-time constants
+
+
+Representation 2
+----------------
+
+To be more flexible, a matrix can be represented by a flat array containing
+ROWS * COLS elements, stored row by row. E.g.,
+
+  [ 1 2 3 ]
+  [       ]   (2 rows, 3 columns)  stored as array:  1 2 3 4 5 6
+  [ 4 5 6 ]
+
+  double M[ROWS*COLS];
+
+  // access i-th row, j-th column element
+  // index = COLS * i + j
+  M[COLS*i + j] = 5; 
+
+Using this representation we can easily allocate matrices dynamically
+
+  double *M = new double[ROWS*COLS]; 
+
+and the dimensions don't have to be known at compile time
+
+
+Representation 3
+----------------
+
+Alternatively, matrices can be represented as an array of pointers to
+rows. Rows don't have to have uniform length. Therefore, this representation
+allows us to save space when storing non-rectangular matrices such as
+triangular matrices
+
+  // create lower triangular matrix using row array
+  int rows = 10;
+  double **M = new double*[rows];  // array of pointers to rows
+
+  for (int i=0; i < rows; ++i) {
+    M[i] = new double[i+1];        // allocate row i of length i+1
+  }
+
+  M[1][0] = 5;      // works!
+                    // M[1] accesses the second row (array)
+                    // M[1][0] accesses the first element in that row
+
+  Destroying M:
+
+  // destroy individual rows first
+  for (int i=0; i < rows; ++i) {
+    delete [] M[i];
+  }
+
+  // then destroy row array
+  delete [] M;
+
+============================================================================
+
+Problem 2 (Matrix Operations)
+
+Suppose we are provided with class Matrix that supports the following
+operations:
+
+- constructor(int n) : creates n by n double matrix, initializes values with 0.0
+- destructor         : cleans up
+- double &e(int i, int j) : gives access to matrix element (i,j)
+- int size()              : returns n if the matrix is an n by n matrix
+
+A) Using above interface implement the following global functions:
+
+    copy(A, B)      assigns A to B (component-wise)
+    add(A, B, C)    computes C = A + B
+    sub(A, B, C)    computes C = A - B
+    mult(A, B, C)   computes C = A * B  (C must not be A or B)
+    transpose(A)    transposes A
+
+  for size-compatible matrices A,B,C
+
+B) Also, using above functions to write code that evaluates the following
+   matrix expression without changing A,B,C,D:
+
+   A * (B + C) - D
+
+Solution: Matrix*
+
+============================================================================
+
+Problem 3
+
+Consider the following classes:
+
+  class X
+  {     
+    public:
+    Y y;
+  };
+
+  class Y
+  {     
+    public:
+    X x;
+  };
+
+A) Explain why this code snippet won't compile
+
+B) Despite your objection, your boss insists on X,Y owning an object of type Y
+   and X, respectively. You remember forward declarations for functions, and
+   now hope that this concepts also applies to classes. Can you make your boss
+   happy?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+A) Explain why this code snippet won't compile
+
+   X has a Y subobject, and Y has an X subobject. This is an invalid recursive
+   definition, because at the time X is defined, the size of Y is not known,
+   and vice versa
+
+B) Despite your objection, your boss insists on X,Y owning an object of type Y
+   and X, respectively. You remember forward declarations for functions, and
+   now hope that this concepts also applies to classes. Can you make your boss
+   happy?
+
+
+ Attempt 1: A forward declaration can break cyclic type dependencies:
+
+   class Y;   // meaning: trust me, there will be a complete definition of Y later
+   
+   class X
+   {     
+     public:
+     Y y;     // existence of Y known, but size still unknown => error
+   };
+ 
+   class Y
+   {     
+     public:
+     X x;
+   };
+
+
+
+
+
+
+-------
+
+ Attempt 2: decouple classes by using pointers to X (and Y). This works
+            because sizes of pointers are the same (4 or 8 bytes),
+            irrespective to what they point
+
+   class Y; // meaning: trust me, there will be a complete definition of Y later
+   
+   class X
+   {     
+     public:
+     Y *py;   // size known, OK
+
+     X()  { py = new Y; }  // create Y subobject when constructing an X
+     ~X() { delete py;  }  // destroy subobject when X object no longer needed
+
+     void foo() { ... }
+   };
+ 
+   class Y
+   {     
+     public:
+     X x;     // OK, x size known, X *px also works
+
+     void bar() { ... }
+   };
+
+   ...
+
+   X x;
+   x.py->bar();  // do something with subobject *x.py
+
+   Y y;
+   y.x.foo();    // do something with subobject y.x
+
+
+============================================================================
+
+Problem 4
+
+The project gods have decided that there must be exactly one object of class
+type Singleton. You are tempted to declare a global variable of type
+Singleton, but then you remember the chaos ensued last year when an evil
+teammate dared to overwrite your shiny global counter
+
+Can you somehow avoid history repeating itself by using a static function
+variable instead? If you can pull this off, this solution has the additional
+benefit that object initialization is completely under your control. This is
+good news because - as you know - initialization order across different code
+modules (.c files) is unspecified which can cause problems when a Singleton
+dependents on other statically initialized data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+In main.c :
+
+  Singleton &get_singleton()
+  {
+    static Singleton singleton; // initialized when function is called first
+    return singleton;
+  }
+
+
+  // usage:
+
+  get_singleton().do_stuff();
+

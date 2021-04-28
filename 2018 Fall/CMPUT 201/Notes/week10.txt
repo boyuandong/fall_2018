@@ -1,0 +1,437 @@
+Week 10 (L25/26/27)
+
+Topics
+
+· Wrapping up file-based Mergesort
+· Multi-Threaded Computations
+· pthread library
+
+============================================================================
+
+Lecture 25 Agenda
+
+- Week 9 mergesort code walkthrough
+
+============================================================================
+
+Lecture 26 Agenda
+
+- (Mock) Quiz 9A + Solutions
+
+- Parallel Vector Addition
+
+=========================================================================
+
+Quiz:
+
+1.
+
+A. What is a distributed computer?
+
+B. Describe what a race condition is and give an example
+
+C. What data do threads share?
+
+D. Explain how mutexes solve the race condition problem
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+A. What is a distributed computer?
+
+  A distributed memory machine in which processing elements are connected by a
+  network. Distributed computers are more scalable than SMP-based machines
+  because they don't suffer from bus contention
+
+B. Describe what a race condition is and give an example
+
+  A race condition occurs when two or more processors access shared data and
+  the result of the computation depends on the order in which instructions are
+  executed
+
+  For example, consider two threads sharing a counter. If each thread
+  increments the counter, which is usually implemented as "read data into
+  register, increment register, write register back", then some execution
+  orders work just fine, but as soon as they are interleaved, some increment
+  operations will have no effect - as seen in the notes
+
+C. What data do threads share?
+
+  Heap and global variables, open files, current work directory, user and
+  group ids, signals, and signal handlers
+
+D. Explain how mutexes solve the race condition problem
+
+  Locking and unlocking mutexes ensures that critical code regions which act
+  on shared resources are only executed by at most thread at a time. Other
+  threads have to wait and one of them can enter the critical section only
+  when the original thread has left it
+
+============================================================================
+
+2. Complete the following code that is supposed to create 10 threads that
+   count from 0 to 1000 and waits for them to completed before exiting
+
+void *work(void *)
+{
+
+}
+
+int main()
+{
+  const int TN = 10;
+ 
+  pthread_t *threads =  new pthread_t[TN];
+
+
+
+    pthread_create(&
+
+
+
+    pthread_join(
+
+
+  return 0;
+}
+
+
+
+============================================================================
+
+Recall:
+
+- create pthread running function with data to work on:
+
+    struct Data 
+    {
+      ...
+    };
+
+    void *function(void *work) 
+    {
+      // we know that we actually passed a data pointer
+      Data *pdata = (Data*)work; 
+
+      // work with *pdata
+      ...
+
+      return pointer-to-result; // or nullptr (see below)
+    }
+
+    ...
+    pthread_t thread;
+    Data data;
+    ...
+    pthread_create(&thread, nullptr, function, &data);
+
+- waiting for pthread to finish:
+
+  pthread_join(thread, nullptr);
+  (or pthread_join(thread, &return-value-pointer); )
+
+
+- A thread result can be either passed by returning a pointer and storing the
+  result when calling pthread_join:
+
+    thread:   return pointer-to-result;
+
+    caller:   ReturnValue *ret;
+              pthread_join(thread, &ret);
+
+  or simply storing the result in the work data structure:
+
+    struct Data 
+    {
+      ...
+      int result;
+    };
+
+    Data data;
+
+    pthread_create(&thread, nullptr, function, &data);
+  
+    pthread_join(thread, nullptr);
+
+    use data.result in main thread
+
+
+
+
+
+
+Solution:
+
+// some work (no data passed)
+void *work(void *)
+{
+  for (int i=0; i <= 1000; ++i) { }
+  return nullptr;
+}
+
+int main()    
+{      
+  const int TN = 10;
+  // could have used an array here because TN is a constant
+  pthread_t *threads = new pthread_t[TN];
+
+  // create threads
+  for (int i=0; i < TN; ++i) {
+    pthread_create(&threads[i], nullptr, work, nullptr);
+  }
+
+  // wait for all threads to finish
+  for (int i=0; i < TN; ++i) {
+    pthread_join(threads[i], nullptr);
+  }
+
+  delete [] threads;
+  return 0;   
+}   
+
+============================================================================
+
+Problem 1: Consider the problem of large-scale vector addition:
+
+  void padd(double A[], double B[], double C[], int n, int tn);
+
+which computes C = A + B component-wise in parallel using tn threads. The
+number of elements in each array n can be large
+
+Example                       A[] =  1  2  3  4 
+                              B[] =  2  4  6  8 
+                             -----------------------
+after padd(A, B, C, 4, tn):   C[] =  3  6  9 12
+
+Implement padd() using pthreads to speed up execution
+
+Hint: consider the following code fragments
+
+// piece of work: data representing sub-arrays handled by a single thread
+struct PAddJob
+{
+  // ... implement
+};
+
+// thread function: execute job described by data - a pointer to a JAddJob
+// object
+static void *padd_thread(void *data)
+{
+  // we know data points to a PAddJob
+  PAddJob &job = *(PAddJob*)data;
+
+  // do the work described by job
+  // ... implement
+  return nullptr;
+}
+
+// adds arrays A and B component-wise and stores result in array C
+// each array has length n, uses tn pthreads
+void padd(double A[], double B[], double C[], int n, int tn)
+{
+  assert(n > 0);
+  assert(tn > 0);
+
+  // 1. create work items
+  // 2. spawn threads
+  // 3. wait for threads to complete
+}
+
+
+
+
+
+
+Solution: see padd/
+
+============================================================================
+
+Lecture 27 Agenda
+
+- Discussion: Is the brain a parallel computer? Do we have "free will"?
+
+- Not covered in class: (Mock) Quiz 9B + Solutions
+
+  read material during reading week ...
+
+- Parallel Matrix Multiplication
+
+============================================================================
+
+Mock Quiz:
+
+1. Fix the following code fragment that is supposed to create 10 threads that
+   each add 10 to shared variable result in a way that avoids race conditions:
+
+  int result = 0;
+
+
+
+  void *worker(void*) {
+    
+
+
+
+
+  }
+
+  // the following code works
+  int main() {
+    const int TN = 10;
+    pthread_t *threads = new pthread_t[TN];
+    for (int i=0; i < TN; ++i) {
+      pthread_create(&threads[i], nullptr, worker, nullptr);
+    }
+    for (int i=0; i < TN; ++i) {
+      pthread_join(threads[i], nullptr);
+    }
+    printf("result = %d\n", result);
+    delete [] threads;
+    return 0;
+  }
+
+
+
+
+
+
+Solution:
+
+    int result = 0;
+
+!   pthread_mutex_t result_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+    void *worker(void*) {
+!     pthread_mutex_lock(&result_mutex);   // lock mutex
+!     result += 10;                        // critical section (only one thread can enter)
+!     pthread_mutex_unlock(&result_mutex); // unlock mutex
+!     return nullptr;
+    }
+
+    // the following code works
+    int main() {
+      ...
+    }
+
+============================================================================
+
+
+2. Explain the purpose of condition variables and describe the pthread
+   functions that deal with them
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+   Condition variables are used to let threads wait on certain variable
+   conditions without having to poll the variables constantly
+
+   The pthread library provides the following condition variable functions:
+
+   pthread_cond_init - initialize condition variable
+
+   pthread_cond_wait - puts thread to sleep, waiting for condition variable
+                        
+   pthread_cond_signal - wake up one thread that waits on condition variable
+
+   pthread_cond_broadcast - wake up all threads that wait on condition variable
+
+============================================================================
+
+Problem 2: 
+
+  Matrix operations are ubiquitous in scientific computing. But some of them
+  --- like multiplication --- are computationally quite expensive. So, it may
+  pay off to parallelize them
+
+  Recall from Week 7:
+
+  For matrices A,B,C:
+
+  C = A + B     =>   Cᵢⱼ = Aᵢⱼ + Bᵢⱼ  
+
+  where Xᵢⱼ is the i-th row and j-th column entry of matrix X
+
+  C = A - B     =>   Cᵢⱼ = Aᵢⱼ - Bᵢⱼ
+       
+                              n-1
+  C = A * B     =>   Cᵢⱼ =     ∑   Aᵢᵣ * Bᵣⱼ
+                              r=0
+
+  Examples (n = 2): 
+
+           [ 0  1 ]       [ 4  5 ]  
+    A =    [      ] , B = [      ]  
+           [ 2  3 ]       [ 6  7 ]  
+
+           [ 4  6 ]              [ -4  -4 ]   
+  A + B =  [      ] ,   A - B =  [        ] , 
+           [ 8 10 ]              [ -4  -4 ]   
+
+           [ 6   7 ] 
+  A * B =  [       ] 
+           [ 26 31 ] 
+
+  Reminder:  "row * column" (inner product)
+
+                 1
+  E.g. (A*B)₁₁ =  ∑  A ₁ᵣ * Bᵣ₁ =  A₁₀ * B₀₁ + A₁₁ * B₁₁ = 31
+                 r=0              2  *  5  +  3  *  7   
+
+
+Problem:
+
+  Above naive matrix multiplication algorithm takes time Θ(n ³), which is slow
+  => We want to speed it up by using all CPU cores we have
+
+Tasks:
+
+- Based on the provided Matrix class implement
+         
+    void pmult(const Matrix &A, const Matrix &B, Matrix &C, int tn);
+
+  that computes C = A * B using tn threads. We assume all matrices are square,
+  and their dimensions are equal
+
+- Measure the performance of pmult() for different matrix sizes and number of
+  threads
+
+Recall that the Matrix class provides the following member functions:
+
+  Matrix(dim)  constructor, creates and initializes dim*dim matrix with 0
+  dimension()  returns #rows (=#columns)
+  clear()      sets all elements to 0
+  e(i, j)      returns reference to matrix element (i,j)
+
+
+
+Solution: see pmult/

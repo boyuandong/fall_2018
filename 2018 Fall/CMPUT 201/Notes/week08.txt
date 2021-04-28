@@ -1,0 +1,868 @@
+Week 08 (L19/20/21)
+
+Topics
+
+· Bit operations
+· Unions
+· Bit fields
+
+============================================================================
+
+Lecture 19 Agenda
+
+- MEX results
+
+- selected MEX problem solutions
+
+=========================================================================
+
+MEX results by question type:
+
+values          81.5%  
+multiple choice 61.8%
+definitions     56.5%
+sum             45.2%    <----- ouch, what is going on here?
+www             16.3%    <----- OUCH!
+
+Marking is grounded as follows:
+
+  In each part >= 50% of the marks are only awarded if we think that your
+  answer is sufficient for using CMPUT 201 as a prerequisite course
+
+Programming question problems at multiple levels:
+
+- not understanding the question
+- not seeing how to solve the problem
+- not being able to implement solution in baby-C++
+- not having enough time
+
+Remedy:
+
+- Spend more time on solving programming problems
+
+- Use online help (such as Stack Overflow) less often
+
+- Get an account on https://open.kattis.com/
+
+  - Thousands of problems hosted there, plus an online judge
+
+  - Solve problems in C++, submit solutions, have them automatically checked
+
+  - Different problem levels from trivial to hard
+
+- Join our problem solving club https://webdocs.cs.ualberta.ca/~contest/
+
+  Current meetings: weekly Fridays 3-5pm in CSC 333
+
+
+Solution of sum(const SList &) is_www developed in class ...
+
+============================================================================
+
+Lecture 20 Agenda
+
+- (Mock) Quiz 7A + Solutions
+
+- Classroom problems
+
+============================================================================
+
+(Mock) Quiz:
+
+1. Describe the following terms in at least two sentences each:
+
+- Bitwise operators 
+- BitVector
+- Bit fields
+- Union
+
+-----
+
+2. Compute the following binary number expressions:
+
+     010100101      010100101     010100101  
+   + 001010111    & 001010111   ^ 001010111   ~101001110
+   -----------    -----------   -----------   ----------
+
+----
+
+3. Convert the following numbers into the other bases:
+
+    binary     octal     hexadecimal
+  -----------------------------------
+   11001111   
+                257
+                           1d9
+
+   Write binary number 101110 in decimal:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=====
+
+Solutions:
+
+1. Describe the following terms in at least two sentences each:
+
+Bitwise operators : 
+
+ Manipulate integral numbers at the bit level. Can be used to set, clear, and
+ invert individual bits and bit groups. Also speeds up some computations
+ because up to 64 bits can be manipulated in one computation step
+
+BitVector :
+
+ A data structure that stores n bits compactly and allows users to address
+ individual bits by their index
+
+Bit fields :
+
+ Integral struct/class data members whose bit-length can be specified.
+ Care must be taken to avoid exceeding their range. Operations are
+ done modulo 2ⁱ, where i is the length of the bit field
+
+Union :
+
+ Like a struct, but stores variables in identical locations to save space.
+ The type of the value that is actually stored needs to memorized
+
+---
+
+2. Compute the following binary number expressions:
+
+     010100101      010100101     010100101  
+   + 001010111    & 001010111   ^ 001010111   ~101001110
+   -----------    -----------   -----------   ----------
+     011111100      000000101     011110010    010110001                  
+
+---
+
+3. Convert the following numbers into the other bases:
+
+    binary      octal     hexadecimal
+  -----------------------------------
+   11 001 111     317         cf    
+   10 101 111     257         af
+  111 011 001     731        1d9
+
+   Binary number 101110 in decimal: 2 ⁵ + 2 ³+ 2 ²+ 2 ¹ = 32+8+4+2 = 46
+                   
+============================================================================
+
+Problem 1:
+
+Describe conceptually what the following code snippets compute:
+
+unsigned int x = ...;  // note: sizeof(x) == 4
+
+A. x = (x & ~0xff) | 0xee
+
+B. (x >> 31) | (x << 1)
+
+C. x &= x-1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solutions:
+
+A. x = (x & ~0xff) | 0xee
+
+  Sets lowest-order byte of x to 0xee (16*14+14 = 238) without changing other
+  parts
+
+  First clears this byte by and-ing with ~0xff. Then sets it to 0xee
+
+  Example: unsigned int x     = 0x12345678;
+           ~0xff              = 0xffffff00;  (inverted bit-mask of bits to be changed)
+           x & ~0xff          = 0x12345600;
+           (x & ~0xff) | 0xee = 0x123456ee;
+
+  Here 0xee < 256 is important, i.e., the value doesn't reach into bits 9+
+
+  How would you set the 10 lowest-order bits to something specific without
+  changing the other bits?
+  
+============================================================================
+
+B. (x >> 31) | (x << 1)
+
+  rotates x one bit to the left
+
+  (i.e., shifts x one bit to the left and reintroduces highest bit at the
+   lowest-order position)
+
+  0x80'00'00'00 => 0x00'00'00'01 => 0x00'00'00'02 => ...
+
+============================================================================
+
+C. x &= x-1
+
+  sets lowest-order 1 bit in x to 0
+
+                        k
+                     ------
+   x  = ....010100101000000   k ≥ 0 zeroes at the end in general
+  x-1 = ............0111111   k ones at the end
+   &  = ............0000000 
+                    ^
+ ... = no change    set to 0, but nothing else is changed
+
+
+ How is that operation useful?
+ 
+============================================================================
+
+Lecture 21 Agenda
+
+- Classroom Problems
+
+===========================================================================
+
+Not covered - have a look:
+
+ - Security bug in Apple IOS that made headlines in 2017 ...
+
+ - What's wrong with the following code? (fail.c)
+
+============================================================================
+
+Problem 2:
+
+- controlling the "armed" LED and a detonator with bit-fiddling
+
+============================================================================
+
+Problem 3
+
+What do these snippets compute - conceptually?
+
+unsigned int x = ..., y = ...;
+bool foo = ...;
+
+A. x && !(x & (x - 1))
+
+B. x ^= -foo;    
+
+C. x = x ^ y;                        
+   y = x ^ y;                        
+   x = x ^ y;                        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solutions:
+
+A. x && !(x & (x - 1)) is true if and only if x is a power of 2
+
+   !(x & (x - 1)) is true iff x is a power of 2 or 0
+
+                  zeroes 1 zeroes
+   x power of 2:  00000001000000000
+   x-1            00000000111111111
+   &              00000000000000000
+
+   x = 0 :        00000000000000000
+   x-1            11111111111111111
+   &              00000000000000000
+
+   x neither:     00011101001000000
+   x-1            00011101000111111
+   &              00011101000000000
+                  -- != 0 --0000000
+
+  x && ... forces the expression to be false in case of x = 0
+
+  How does && relate to Boolean operation & ? Are they interchangeable? Explain
+
+============================================================================
+
+B. x ^= -foo;
+
+   Inverts x iff foo = true (if computer is using 2's-complement arithmetic,
+   99.999% do)
+
+   Faster than branching on machines with expensive jump instructions:
+
+   Equivalent code:
+
+   if (foo) {
+     x = ~x;
+   }
+
+   foo = true  (implicit conversion to 1)
+
+   x     0101000101010001
+   -foo  1111111111111111 = -1
+   ^     1010111010101110 = ~x
+
+   foo = false (implicit conversion to 0)
+
+   x     0101000101010001
+   -foo  0000000000000000  = -0
+   ^     0101000101010001  = x
+ 
+============================================================================
+
+C. x = x ^ y; y = x ^ y; x = x ^ y;
+   a1         a2         a3
+
+   swaps x and y without using temporary variable - MAGIC ;-)
+
+   a1:  x1 = x ^ y;
+   a2:  y1 = x1 ^ y = x ^ y ^ y = x;   (because z ^ z = 0 for all z)
+   a3:  x2 = x1 ^ y1 = x ^ y ^ x = y;  
+
+   because ^ is commutative, i.e., x ^ y = y ^ x (order doesn't matter)
+
+   Therefore, x ^ y ^ x = x ^ x ^ y = y
+
+============================================================================
+
+Problem 4:
+
+A. Implement function pop_count ("population count") that returns the number
+   of 1 bits in a given unsigned int value
+
+   pop_count(5)  returns 2   // bits: 101
+   pop_count(15) returns 4   // bits: 1111
+
+B. Implement function parity that returns true iff the number of 1 bits
+   in a given unsigned int value is odd
+
+   parity(3)  returns false
+   parity(8)  returns true
+   parity(15) returns false
+
+============================================================================
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+
+A.    
+
+// visit all bits by shifting x to the right and
+// extracting the lowest-order bit in each iteration
+int pop_count(unsigned int x)
+{
+  int count = 0;
+
+  while (x) {
+                     // x != 0 <=> work to do
+    count += x & 1;  // increment iff lowest bit in x is set; no if => faster
+    x >>= 1;         // shift right, 0 comes in from left
+  }
+  return count;
+}
+      
+
+B.    
+
+bool parity(unsigned int x)
+{
+  int parity = 0;
+
+  while (x) {
+    partity ^= x & 1;  // flip iff lowest bit in x is set
+    x >>= 1;           // shift right, 0 comes in from left
+  }
+  return parity;
+}
+
+or - when having access to pop_count - simply:
+
+bool parity(unsigned int x)
+{
+  return pop_count(x) & 1;  // true iff pop_count is odd
+}
+      
+
+
+Both functions can be made faster in case not many bits are set by using
+the x &= x-1; idea explained above:
+
+int pop_count(unsigned int x)
+{
+  int count = 0;
+
+  while (x) {
+    ++count;
+    x &= x-1; // remove lowest-order 1
+  }
+  return count;
+}
+
+bool parity(unsigned int x)
+{
+  bool parity = false;
+
+  while (x) {
+    parity = !parity;  // toggle parity
+    x &= x-1;          // remove lowest-order 1
+  }
+  return parity;
+}
+
+Alternatively, tables with pre-computed popcount and parity values for bytes
+can be used to speed things up (above loop computations get replaced by a
+simple table lookup). E.g.:
+
+int pc_table[256];
+
+// initialize pre-computed values
+for (int i=0; i < 256; ++i) {
+  pc_table[i] = popcount(i);
+}
+
+
+then:
+
+int fast_popcount(unsigned int x)
+{
+  return pc_table[x & 0xff] + pc_table[(x >> 8) & 0xff] +
+         pc_table[(x >> 16) & 0xff] + pc_table[(x >> 24) & 0xff];
+}
+
+How does this work?
+
+============================================================================
+
+Problem 5
+
+A. Consider the following code snippet:
+
+        union {
+          double x;
+          int a;
+          int b;
+        } u;
+
+        u.a = 5; 
+        printf("%d", u.b); 
+        ++u.b; 
+        printf("%d", u.a);
+
+   What is sizeof(u) and what does this code print?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+   sizeof(u) = max(sizeof(x), sizeof(a), sizeof(b)) = 8 
+
+   Output: 6  (u.a and u.b refer to the same variable)
+
+   [see part5, pages 24 and 25]
+
+============================================================================
+
+B. Complete the following code that is supposed to determine at runtime
+   whether the machine it runs on uses the little-endian byte ordering:
+ 
+    short x = ...;
+    bool uses_little_endian = ...;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+   short x = 1;
+   bool uses_little_endian = *(char*)&x;
+
+   (char*)&x is a char pointer pointing to the first byte of x
+
+   Consider x = 1 = 0x0001. On a little-endian machine, x's low-order byte
+   (0x01) is stored first. On a big-endian machine, x's high-order byte (0x00)
+   is stored first
+
+   Thus, reading a value != 0 from the first byte location indicates
+   little-endian format, and 0 indicates big-endian format
+
+   [see part5, page 26]
+
+============================================================================
+
+C. Implement the function below that is supposed to reverse the byte ordering
+   of a double floating point value:
+
+   void reverse_bytes(double &x)
+   {
+
+
+
+
+
+   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+   #include <algorithm>   // for std::swap
+
+   void reverse_bytes(double &x)
+   {
+     // sizeof(x) == 8
+     char *p = (char*)&x;   // pointer to first byte of x
+     std::swap(p[0], p[7]); // swap 2 bytes
+     std::swap(p[1], p[6]); // ...
+     std::swap(p[2], p[5]); // ...
+     std::swap(p[3], p[4]); // ...
+   }
+
+   [see part5, page 28]
+
+============================================================================
+
+D. Complete the function below that returns the k-th bit stored in a byte
+   array (recall: each byte consists of 8 bits)
+
+   Bit 0 is the lowest order bit in bytes[0], bit 8 is the lowest order bit in
+   bytes[1], etc. E.g.
+
+     bytes[2] bytes[1] bytes[0]
+     00101010 00100010 01000001
+         |
+         extract_bit(bytes, 19) = true
+
+    bool extract_bit(unsigned char bytes[], unsigned int k)
+    {
+      return ...
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+   bool extract_bit(unsigned char bytes[], unsigned int k)
+   {
+     //         byte in which bit k resides
+     //             |
+     //             |       mask of bit within that byte
+     //             |           |  
+     return bytes[k / 8] & (1 << (k % 8));
+
+     // or equivalently:
+     // return bytes[k >> 3] & (1 << (k & 7));
+     //
+     // k >> 3 = k / 8 rounded down if k >= 0
+     // k & 7  = k % 8 [ page 17 ]
+
+
+     // or:
+     // return (bytes[k / 8] >> (k % 8)) & 1;
+     // how does this work?
+   }
+
+   [see part 5, pages 16 and 20]
+
+============================================================================
+
+Problem 6 
+
+To shorten code that deals with bytes we'll use the following typedef:
+
+typedef unsigned char uint1;
+
+(or in modern C++: using uint1 = unsigned char; )
+
+A. Implement function reverse_bits that reverses the bit ordering
+   of a byte
+
+   uint1 x = 5;
+   // x = 00000101 in binary
+   uint1 y = reverse_bits(x);
+   // y = 10100000
+
+B. Use reverse_bits to reverse the bit ordering of a byte array
+
+   uint1 A[] = { 0x11, 0x22, 0x33 };
+   // A = 00010001 00100010 00110011 in binary
+   reverse_bits(A, 3);
+   // A = 11001100 01000100 10001000
+   
+C. Use the array version of reverse_bits to reverse the bit ordering of 
+   an int variable. For this, implement
+
+   void reverse_bits(int &x);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+A. We have seen this code that extracts the k-th bit from byte x:
+
+    x & (1 << k)
+
+   The value is != 0 if the k-th bit of x is 1, 0 otherwise.
+   To set the k-th bit in y we can use this code
+
+   y |= (1 << k);
+
+   Suppose y is the output value, which in the end must hold the reversed bit
+   sequence of x
+
+   Bit k in x corresponds to bit 7-k in y:
+          
+               k=0
+               |
+    x = 00010101
+           X
+    y = 10101000
+        |
+       7-k
+   
+  So, we could just loop for k=0..7, extract the k-th bit from x, and
+  if it is 1, set bit 7-k in y.
+
+  uint1 reverse_bits(uint1 x) 
+  {
+    uint1 y = 0;
+    for (int k=0; k < 8; ++k) {
+      if (x & (1 << k)) {
+        y |= (1 << (7-k));
+      }
+    }   
+    return y;
+  }
+
+  A somewhat simpler version with fewer ifs:
+
+  uint1 reverse_bits(uint1 x)
+  {
+    uint1 y = 0;
+    for (int i=0; i < 8; ++i) {
+      y <<= 1;
+      y |= x & 1;
+      x >>= 1;
+    }
+    return r;
+  }
+
+  How does this work?
+
+B. reverse the byte ordering, and then reverse the bit order in each byte
+   (see reverse.c)
+
+C. void reverse_bits(int &x) 
+   {
+     // reverses bits in array that contains 4 bytes
+     //
+     // pointer to first byte of x
+     //                    |
+     // treat it as uint1* |
+     //             |      |
+     reverse_bits((uint1*) &x, sizeof(x));
+   }
+
+============================================================================
+
+Problem 7 (power of parallel computation, homework (don't peek!))
+
+// 8-byte unsigned integer
+typedef unsigned long long uint8;
+
+const uint8 MAGIC[] =
+{
+  0x5555555555555555ull,  // unsigned long long constants (ull suffix)
+  0x3333333333333333ull,
+  0x0F0F0F0F0F0F0F0Full,
+  0x00FF00FF00FF00FFull,
+  0x0000FFFF0000FFFFull,
+  0x00000000FFFFFFFFull
+};
+
+int mystery(uint8 bits)
+{
+  bits = (bits & MAGIC[0]) + ((bits >> 1)  & MAGIC[0]);
+  bits = (bits & MAGIC[1]) + ((bits >> 2)  & MAGIC[1]);
+  bits = (bits & MAGIC[2]) + ((bits >> 4)  & MAGIC[2]);
+  bits = (bits & MAGIC[3]) + ((bits >> 8)  & MAGIC[3]);
+  bits = (bits & MAGIC[4]) + ((bits >> 16) & MAGIC[4]);
+  bits = (bits & MAGIC[5]) + ((bits >> 32) & MAGIC[5]);
+  return (int)bits;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===
+
+
+Solution:   popcount!
+
+- consider bit sequences: 0x5555... = 0101 0101 0101 0101 0101 ...
+                          0x3333... = 0011 0011 0011 0011 0011 ...
+                          0x0f0f... = 0000 1111 0000 1111 0000 ...
+
+- each line in the code above computes the number of bits in 2,4,8,16,32,64
+  bit groups by filtering out the lower half and the higher half of the
+  previous group popcounts and adding them
+
+  The parallel bit-group additions don't create a carry because the number of
+  1 bits in an n-bit number is <= n which can be represented by floor(log_2
+  n)+1 bits (1->1,2->2,3->2,4->3,5->3,...) which is ≤ n for all n > 0
+
+- run some examples ...
+
+  for instance, the last line 
+
+  bits = (bits & MAGIC[5]) + ((bits >> 32) & MAGIC[5]);
+->
+  bits = (bits & 0x00000000FFFFFFFFull) + ((bits >> 32) & 0x00000000FFFFFFFFull);
+
+  masks out the popcount of the lower 32 bits and adds to it the popcount of
+  the higher 32 bits for the final result
+
+- computes 64-bit popcount in 6 "simple steps" without ifs !
+
+----
+
+How to generalize this code to 128 bit integers?
+
+----
+
+Note: g++ and clang++ provide non-standard library functions
+
+  int __builtin_popcount(int)
+  int __builtin_popcountl(long int)
+  int __builtin_popcountll(long long int)
+
+Also, modern CPUs even have a built-in machine instruction to compute popcount
+quickly (see pop.C)
+

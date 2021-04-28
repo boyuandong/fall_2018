@@ -1,0 +1,747 @@
+Week 12 (L31/32/33)
+
+Topics
+
+· A final look at references
+· STL containers, iterators, algorithms
+
+============================================================================
+
+Lecture 31 Agenda
+
+- YARP
+- (Mock) Quiz 12A + solutions
+- Classroom problems
+
+============================================================================
+
+YARP - Yet Another Reference Problem
+
+Consider 
+
+  int &foo(int &x)              int bar(int x)
+  {                             {
+    ++x;                          ++x;
+    return x;                     return x;
+  }                             }
+
+  int y = 6;
+  cout << foo(y) << endl;           // (1)
+  cout << (&foo(y) == &y) << endl;  // (2)
+  cout << ++foo(y) << endl;         // (3)
+
+  int z = 6;
+  cout << bar(z) << endl;           // (4)
+  cout << (&bar(z) == &z) << endl;  // (5)
+  cout << ++bar(z) << endl;         // (6)
+
+
+A) Which line is valid C++ code? What do the correct lines print?
+
+B) Write C code that mimics foo's behaviour and the test code
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+A) Lines 1-4 compile. Output:
+
+  int y = 6;
+  cout << foo(y) << endl;          // 7  : foo increments variable y
+  cout << (&foo(y) == &y) << endl; // 1  : reference refers to y,
+                                   //      y incremented
+  cout << ++foo(y) << endl;        // 10 : y incremented first in foo,
+                                           followed by pre-increment
+  int z = 6;
+  cout << bar(z) << endl;          // 7: same result as foo, but no side-effect
+  cout << (&bar(z) == &z) << endl; //    oops! lvalue required!
+  cout << ++bar(z) << endl;        //    oops! lvalue required!
+
+lvalue: an object that we can take the address of
+        e.g left-hand-side of assignment
+
+rvalue: temporary object that doesn't persist beyond a single expression
+        (we can't take the address of)
+
+Operations that change variables (like ++ or assignments) are only permitted
+for lvalues. Why? Rvalues disappear after the statement execution is
+completed. So, changing them serves no purpose and is potentially dangerous.
+
+E.g.  int *p = &bar(z);    // suppose this is allowed
+                           // return value is temporary variable which is 
+                           // deleted at the end of the statement execution
+      *p = 5;              // p points to non-existent temporary variable
+                           // ouch! => C++ forbids taking addresses of
+                           // temporary objects or changing them
+
+============================================================================
+
+B) 
+
+Under the hood, C++ references are represented as pointers
+
+So, in the C version of foo a pointer needs to be passed, and a pointer is
+returned
+
+// C                                       // C++
+int *foo(int *px)                          // int &foo(int &x)
+{                                          // {                               
+  ++(*px);                                 //   ++x;                          
+  return px;                               //   return x;                     
+}                                          // }                               
+                                                                             
+int main()                                   
+{                                            
+  int y = 6;                               // int y = 6;                      
+  printf("%d\n", foo(&y));                 // cout << foo(y) << endl;
+  printf("%d\n", foo(&y) == &y);           // cout << (&foo(y) == &y) << endl;
+  printf("%d\n", ++(*foo(&y)));            // cout << ++foo(y) << endl;       
+  return 0;
+}
+
+============================================================================
+
+(Mock) Quiz:
+
+A. What is the STL and why is it useful?
+
+B. What differentiates sequence from associative STL containers?
+
+C. What is the purpose of iterators in STL? Give an example
+
+D. Given a std::list<int> il; write code that prints all elements of il
+
+============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Quiz Solutions:
+
+A. What is the STL and why is it useful?
+
+STL is the C++ standard template library. It provides numerous useful template
+container classes and algorithms
+
+============================================================================
+
+B. What differentiates sequence from associative STL containers?
+
+Users of sequence containers can specify where elements are stored
+(e.g. std::vector and std::list). Locations of associative container elements
+are determined by their keys and can't be changed (e.g. tree-based
+implementation of std::set and std::map)
+
+============================================================================
+
+C. What is the purpose of iterators in STL? Give an example
+
+Iterators are the glue between container classes and algorithms in STL.
+They allow us to visit elements in a generic way
+
+Examples:
+
+ - see D.
+
+ - std::vector<int> v;
+
+   v.push_back(5); v.push_back(3);
+   std::vector<int>::iterator it = begin(v);
+   *it = 2;  // store 5 in first location
+   ++it;
+   *it = 1;  // store 1 in second location
+
+============================================================================
+
+D. Given a std::list<int> il; write code that prints all elements of il
+
+   std::list<int> il;
+
+   // iterator based solution
+   
+   std::list<int>::iterator it = begin(il), end = end(il);
+
+   for (; it != end; ++it) {   // this loop also works for all other containers
+     cout << *it << endl;
+   }
+
+   // alternative C++11 solution using auto and range-based for:
+
+   for (auto x : il) {
+     cout << x << endl;
+   }
+
+   Works with all STL container classes
+
+   auto lets the compiler infer the type of a variable automatically.
+   E.g. auto d = 3.5;   // type of d is double
+
+   range-based for iterates through STL containers, assigning each element to 
+   the variable in turn. If you want to change data in the container, use auto &
+   E.g.
+
+   for (auto &x : il) {
+     x = 0;                 // sets current list value to 0
+   }
+ 
+============================================================================
+
+Problem 1
+
+A. Write a class Foo that in its constructor adds 1,000 pointers to
+   individually allocated double floating point values to its data member v -
+   an STL vector
+
+B. Also write Foo's destructor which needs to release all memory
+
+C. Explain what exactly happens when executing this code:
+
+   { 
+     Foo foo;
+   }
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+A.+B.
+
+#include <vector>
+
+class Foo
+{
+  public: 
+
+  Foo() 
+  {
+    // individually allocate 1,000 double values and append pointers to v
+    for (int i=0; i < 1'000; i++) {
+      v.push_back(new double);      
+    } 
+  }
+
+  ~Foo()
+  {
+    // free memory pointed to by v elements
+    std::vector<double*>::iterator it = begin(it), end = end(v);
+    for (; it != end; ++it) {
+      delete *it; // it: points to pointer to double
+    }
+  }
+
+  // range-based for solution:
+  // for (auto p : v) { 
+  //   delete p;
+  // }
+
+  private:
+  // data
+  std::vector<double*> v;
+};
+
+
+C. What exactly happens here:
+
+{ Foo foo; }
+
+- First, foo is created by making memory for foo available on the stack.
+  Then Foo's constructor is called for object foo.
+  It first calls the constructor of foo.v implicitely, which creates and empty
+  vector
+  
+  Then 1,000 double values are allocated on the heap and their addresses are
+  stored in foo.v
+
+- Then foo goes out of scope and it is destroyed:
+  - Foo's destructor is called, which first releases all memory
+    associated with the double pointers stored in foo.v. 
+  - Then it calls the destructor of v implicitely
+  - Finally, the stack area foo occupied is deallocated
+
+============================================================================
+
+Lecture 32 Agenda
+
+- Warmup Problem
+- Classroom problems
+
+=========================================================================
+
+Warmup:
+
+We want to implement function safe_delete(p) that sets p to nullptr
+after deleting p in debug mode like so:
+
+
+int *p = new int;
+...
+delete p;
+p = nullptr; // do this only in debug mode (macro NDEBUG not set)
+
+*p = 0; // segfault - GOOD! without p = nullptr the program may continue
+        // accessing memory that has been released by delete
+
+->
+
+int *p = new int;
+safe_delete(p);
+
+Implement safe_delete(p)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+debug mode:   g++ ... *.cpp
+release mode: g++ -DNDEBUG ... *.cpp
+
+template <typename T>
+void safe_delete(T *&p)
+{
+  delete p;
+
+#ifndef NDEBUG
+  p = nullptr;   // only compiled in non-debug mode
+#endif  
+}
+
+int *p = new int;
+safe_delete(p);
+
+
+// cousin for new []
+
+template <typename T>
+void safe_bracket_delete(T *&p)
+{
+  delete [] p;
+
+#ifndef NDEBUG
+  p = nullptr;   // only compiled in non-debug mode
+#endif  
+}
+
+int *p = new int[5];
+safe_bracket_delete(p);
+
+
+
+============================================================================
+
+Problem 2
+
+Write function template "append" that appends all elements stored in one
+vector to another one of identical but arbitrary type.
+
+Do you need to insist on both vectors being distinct?
+
+E.g.
+
+vector<int> from = { 1, 2, 3, 4 }
+vector<int> to = { 5, 6 }
+
+append(from, to);
+// to = 5, 6, 1, 2, 3, 4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+[ Almost correct ... (see below) ]
+
+// C++03 version (using iterators explicitely)
+
+template <typename T> 
+void append(const std::vector<T> &from, std::vector<T> &to)
+{
+  assert(&from != &to);  // make sure vectors are distinct
+
+  // step through "from" and add all elements to "to"
+
+  vector<T>::const_iterator
+    it = std::begin(from),
+    end = std::end(from);  // (*)
+
+  for (; it != end; ++it) {
+    to.push_back(*it);
+  }
+}
+
+// C++11 version using range-based for
+
+template <typename T> 
+void append(const std::vector<T> &from, std::vector<T> &to)
+{
+  assert(&from != &to);  // make sure vectors are distinct
+
+  // using reference avoids copy
+
+  for (const auto &x : from) {
+    to.push_back(x);
+  }
+}
+
+Application:
+
+  std::vector<double> v1, v2; 
+  v1.push_back(1);
+  v2.push_back(2);
+  append(v1, v2); // appends elements from v1 to v2
+  // v2 now contains 2 1
+
+
+Why do we insist on vectors "from" and "to" being distinct?
+
+Imagine what happens if they are identical, keeping in mind that push_back may
+lead to reallocating elements when exceeding the vector's capacity. In this
+case both iterators (it, end) will be invalidated (i.e., they will point to
+old and no longer relevant data) because we change the vector while traversing
+it!
+
+Rule: Don't change containers while traversing (unless you really know what
+      you are doing)
+
+Note:
+
+If you compile the first code snippet you'll see an error message for line
+(*). This has to do with the compiler not knowing what vector<T>::iterator
+is. Depending on T, it could be a type or a static class member of
+vector<T>. To make the compiler interpret vector<T>::iterator as a type in
+this template context, typename needs to be added in front:
+
+  typename vector<T>::const_iterator it = ...
+  ^^^^^^^^
+
+Another example: 
+
+      T::bar * p; 
+
+inside a function template is ambiguous. It could mean:
+
+  1) multiply static data member bar of class T with p (and ignore the result
+     - which is weird but possible), or
+
+  2) declare a pointer to a variable of type T::bar
+
+To distinguish these cases, the C++ standard requires us to write
+
+  typename T::bar *p;
+
+in case 2
+
+============================================================================
+
+Lecture 33 Agenda
+
+- Math warmup questions about derivatives and solving linear systems
+- Classroom problems
+
+============================================================================
+
+Warmup questions:
+
+- what is the derivative of (x^2 + 1)) w.r.t. x ?   (^2 = square)
+-       -"-                            w.r.t. z ?
+-       -"-              of sum(i=1..n) (a * x_i + b - y_i)^2  w.r.t. a and b ?
+- necessary condition for local extrama?
+- solving systems of two linear equations with two variables
+
+Methods to solve above questions should be in your problem-solving toolbox
+
+If you can't do those problems learn how to do them (e.g. by taking 2nd/3rd
+year math courses)
+
+============================================================================
+
+Problem 3
+
+Write function template "find" that takes two iterators "start" and "end" and
+a const reference to x of compatible element type as parameters and returns an
+iterator to the first element between "start" and "end" (excluding) that
+matches x, or "end" if no element matches
+
+Example:
+
+  std::vector<int> v = { 1, 5, 8, 9, 10 }; // C++11 initializer list
+  auto it = find(std::begin(v), std::end(v), 5);
+
+  if (it != end(v)) {
+    printf("found 5 - overwrite with 2");
+    *it = 2;
+  } else {
+    printf("5 not found");
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+  template <typename Iterator, typename Value> 
+  Iterator find(Iterator start, Iterator end, const Value &x)
+  {
+    while (start != end && *start != x) {
+      ++start;
+    }
+    return start;
+  }
+
+"Iterator" and "Value" are type parameter names that make it clear what the
+function expects, but they could be called U, V - say
+
+Above function expects that ++ and * is supported for type Iterator and that
+type Value supports !=
+
+============================================================================
+
+Problem 4
+
+Recall that std::set<T> represents a set of values of type T, which by
+definition contains each value at most once. Use this property to implement
+the following function template that is supposed to count the number of unique
+elements in a given STL container "cont" in runtime O(n log n), where n is the
+number of elements in "cont"
+
+  template <typename T>
+  int unique_count(const T &cont)
+  {
+    ...
+  }
+
+Hints:
+
+1. std::set supports insert(x) for inserting element x and size() for
+   reporting the number of stored elements
+
+2. All STL container types T provide type T::value_type which represents
+   the type of elements stored in the container
+
+(Solution: see Unique.cpp)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+============================================================================
+
+Problem 5 (not done in class - homework)
+
+- Define class template Point that stores two coordinates x,y having arbitrary
+  but identical type T, and also has a constructor that initializes x,y with
+  given values, using T's default values as default
+
+- Point also needs to support operator += that adds another point to the object
+  (component-wise)
+
+- Finally, define an operator<< template that outputs a point (using the format
+  shown below)
+
+E.g.,
+
+  Point<double> p;     // (0.0, 0.0)
+  Point<int> q(3);     // (3, 0)
+  Point<int> r(2, 5);  // (2, 5)
+  q += r;              // q now (5, 5)
+  cout << q << endl;   // prints (5, 5)
+  
+should work
+
+(Solution: see Point.cpp)
+
+============================================================================
+
+Problem 6 (not done in class - homework)
+
+Implement class Dictionary that provides the following public interface:
+
+- insert(a, b) : C++-string b is associated with C++-string a, b can't be empty
+
+- retrieve(a) : return string associated with C++-string a, or the empty string
+                if no string is associated with a
+
+a and b have type std::string
+
+Any string a can only be associated with at most one string b
+
+insert and retrieve must run faster than linear time
+
+(Solution: see Dictionary.cpp)
+
+============================================================================
+
+Problem 7
+
+Does (should) the following code compile?
+
+Explain and fix any issues you discover
+
+int main()
+{
+  map<int, string> int2str;
+
+  int2str.insert({10, "foo"});
+  int2str.insert({20, "bar"});
+
+  auto it = int2str.find(20);
+
+  if (it != end(int2str)) {
+    cout << it->first << " is mapped to " << it->second << endl;
+
+    // change of mind: map 30 instead of 20 in-place
+    it->first = 30; 
+    it->second = "Expecto Patronum";
+  }
+
+  it = int2str.find(30);
+
+  if (it != end(int2str)) {
+    cout << it->first << " is mapped to " << it->second << endl;
+  }
+  
+  return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+Line
+
+  it->first = 30;
+
+should and indeed does not compile because in the (key, value) pairs maps
+store the first component (key) is constant. In STL the pair type is defined
+like this:
+
+    std::pair<const key_type, value_type>
+
+This is to protect the integrity of the binary search tree maps are based on as
+keys are used to order nodes in that tree
+
+So, we can't just simply change keys and hope that this will not destroy the
+binary search tree property
+
+The same holds for std::set - using iterators we can't simply change elements

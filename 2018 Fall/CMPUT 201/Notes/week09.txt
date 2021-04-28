@@ -1,0 +1,478 @@
+Week 09 (L22/23/24)
+
+Topics
+
+· File I/O
+· Formatted Output
+
+============================================================================
+
+Lecture 22 Agenda
+
+- Quiz 4 (8A)
+- Apple IOS Bug
+- Latency vs throughput intro
+
+============================================================================
+
+Can you spot the devastating bug in fail.c ?
+
+============================================================================
+
+Discussed the Latency vs Throughput problem
+
+- accessing files on harddisks
+- accessing files on SSDs
+- accessing data in main memory
+- oil pipelines
+- video streaming
+- video games
+- book recommendation: "Algorithms to Live By"
+    E.g., the secretary problem
+- explained how matrix multiplication works
+  and why one function is 26x faster than the other
+  (see fastmatrix.c)
+
+============================================================================
+
+Lecture 23 Agenda
+
+- Quiz 4 Solutions
+
+- Classroom Problems
+
+=========================================================================
+
+Quiz 4 Solutions:
+
+1.  
+
+What is the advantage of using buffered over unbuffered file I/O?
+
+  Buffered I/O is faster, because data is only written when the buffer is full
+  or flushed. Likewise, multiple items are read in succession. This approach
+  reduces the number of times the read/write head has to be positioned on
+  spinning media
+
+How does endianness impact writing binary data to files?
+
+  When reading binary files stored in a networked file system by a computer
+  with different endianness, data would not be consistent. Thus, an
+  endianness-neutral data format should be chosen
+
+How does Unix interact with hardware devices?
+
+  Devices are accessed by reading and writing to device files stored in
+  /dev. Device drivers map file operations to hardware functionality
+
+Why is random access to harddisk files much slower than accessing main memory?
+
+  Positioning read/write heads on spinning magnetic media can take
+  milliseconds due to relatively low speeds. Main memory is built from much
+  faster electronic components and allows random access
+
+============================================================================
+
+2. Consider the following struct and implement X::serialize using
+   serialize_int and serialize_char:
+ 
+  struct X                              void X::serialize(FILE *fp) {
+  {                                       serialize_int(a, fp);
+    int a, b;                             serialize_int(b, fp);
+    char c, d;                            serialize_char(c, fp);
+    void serialize(FILE *fp);             serialize_char(d, fp);
+  };                                    }
+
+============================================================================
+
+3. Complete the following code that is supposed to set the tenth byte of file
+   "aaa" to 99 while leaving all other data unchanged:
+
+   FILE *fp = fopen("aaa", "r+");  // open for read/write
+   fseek(fp, 9, SEEK_SET);         // set file location to 9 (start index 0)
+   fputc(99, fp);                  // write 99 there
+   fclose(fp);                     // close file
+
+============================================================================
+
+Problem 1: Consider the following two classes:
+
+  struct X {                         struct Y {
+    int a, b;                          int c, d;
+    void serialize(FILE *fp) {         X e, f;
+      serialize_int(a, fp);            void serialize(FILE *fp) {
+      serialize_int(b, fp);
+    }                                     // ...
+  };                                   
+                                       }
+                                     }
+
+  A) Complete Y::serialize()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+     struct Y {
+       int c, d;
+       X e, f;
+       void serialize(FILE *fp) {
+         serialize_int(c, fp);
+         serialize_int(d, fp);
+         e.serialize(fp);
+         f.serialize(fp);
+       }
+     };
+
+
+  B) Suppose you had to implement a FileArray that stores n Y objects,
+     for which n is passed to the constructor and never changes
+
+     What information is stored in the file and how do you retrieve the
+     Y object at index i provided Y has member function deserialize?
+
+     Y FileArray::get(int i) 
+     {
+       assert(i >= 0 && i < n);
+       
+       
+
+     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+   Similar to the int FileArray, we store int n followed by n elements
+
+     Y FileArray::get(int i) 
+     {
+       assert(i >= 0 && i < n);
+
+       if (fseek(fp, sizeof(n) + i * sizeof(Y), SEEK_SET)) {
+         perror("get: fseek error");
+         exit(10);
+       }
+
+       Y y;
+
+       // assuming Y::deserialize returns success flag (false <=> error)
+       
+       if (!y.deserialize(fp)) {
+         fprintf(stderr, "get: deserialize error\n");
+         exit(10);
+       }      
+       return y;
+     }
+
+
+     Y a = fa.get(i);
+
+============================================================================
+
+Problem 2 (Merge)
+
+   Suppose you have two files, each containing a non-decreasing sequence of
+   unsigned bytes. Implement function merge that creates a third file that
+   contains the non-decreasing sequence of all unsigned bytes stored in both
+   original files in linear time
+
+   Function merge is the central part of mergesort, a fast Θ(n log n)
+   worst-case time sorting algorithm that is well-suited for sorting large
+   amounts of data stored in files. You may have seen mergesort in CMPUT
+   174/175 and you'll discuss it in more detail in CMPUT 204
+
+   Example:
+
+   file 1 bytes:  1 3 5 7 8 10
+   file 2 bytes:  2 5 5 8 9 11
+   file 3 bytes:  1 2 3 5 5 5 7 8 8 9 10 11
+
+   /*
+     files *fp1, *fp2 contain non-decreasing sequences of unsigned bytes
+     both are assumed to be opened for reading,
+     *fp3 is assumed to be opened for writing,
+     no files have to be closed
+   */
+   void merge(FILE *fp1, FILE *fp2, FILE *fp3)
+   {
+     // ... to be implemented ...
+   }
+
+   int main()
+   {
+     FILE *fp1 = fopen("aaa", "r");
+     FILE *fp2 = fopen("bbb", "r");
+     FILE *fp3 = fopen("ccc", "w+");
+
+     if (!fp1 || !fp2 || !fp3) {
+       fprintf(stderr, "can't open file\n");
+       exit(10);
+     }
+  
+    merge(fp1, fp2, fp3);
+    fclose(fp3);
+    fclose(fp2);
+    fclose(fp1);  
+  }
+
+
+Hint: use fgetc(fp) and fputc(c, fp), fgetc(fp) returns char or EOF (<0) if a
+      character can't be read
+
+Sol: see merge.c
+
+============================================================================
+
+Lecture 23 Agenda
+
+- Classroom Problems
+
+=========================================================================
+
+Problem 3:
+
+1. What is the contents of file "aaa" after running the following code?
+   Explain what is happening.
+
+  FILE *fp = fopen("aaa", "w");
+  fprintf(fp, "test");         
+  fprintf(stderr, "testing");  
+  fseek(fp, -4, SEEK_CUR);     
+  fprintf(fp, "foo");          
+  fclose(fp);                  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+  FILE *fp = fopen("aaa", "w");// open file aaa for writing, truncate
+  fprintf(fp, "test");         // write test to file
+  fprintf(stderr, "testing");  // write testing to stderr, no effect on file
+  fseek(fp, -4, SEEK_CUR);     // set read/write location to current-4, i.e.
+                               // start of file
+  fprintf(fp, "foo");          // write foo to file
+  fclose(fp);                  // flush buffer and close file
+
+Result:  file aaa contains word foot
+
+============================================================================
+
+Problem 4. Write a code snippet that creates file "xxx" containing unsigned
+           2-byte numbers 0,1,..65535=2¹⁶-1 in low-order-byte-first binary
+           format
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+
+
+FILE *fp = fopen("xxx", "w"); // open xxx for writing and truncate
+for (unsigned int i=0; i < 65536; ++i) {
+  fputc(i, fp);               // writes lowest-order byte of i
+  fputc(i >> 8, fp);          // writes second-lowest-order byte of i
+}
+fclose(fp);
+
+Check file contents with od -t x1 xxx | less
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+============================================================================
+
+Problem 5. Write a code snippet that prints the following table consisting of
+           1000 lines to stdout:
+
+|   1|1000|
+|   2| 999|
+|   3| 998|
+...
+| 999|   2|
+|1000|   1|
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+#include <cstdio>
+
+int main()
+{
+  for (int i=0; i < 1000; ++i) {
+    printf("|%4d|%4d|\n", i+1, 1000-i);
+  }
+}
+
+============================================================================
+
+Problem 6
+
+In Problem 2 we saw how to merge two byte files: merge.c
+
+Change the merge function so that it also accepts two length parameters (long
+l1, long l2) that specify the length of each byte sequence. The function will
+be used in Problem 7 for implementing mergesort
+
+/*
+   merge two non-decreasing unsigned byte sequences stored in *fp1, *fp2 
+  (of length l1, l2 respectively) and write the result to *fp3  
+  *fp1, *fp2 are opened for reading    
+  read positions are already set  
+  *fp3 is opened for writing 
+  no files have to be closed
+*/
+
+void merge(FILE *fp1, long l1, FILE *fp2, long l2, FILE *fp3);
+
+Solution:
+
+see top of mergesort.c
+
+============================================================================
+
+Problem 7
+
+Recall that mergesort works recursively like so:
+
+(pseudocode)
+
+mergesort(A) 
+{
+  if (length(A) < 2) return
+
+  split A into two halves B1, B2
+  
+  mergesort(B1)
+  mergesort(B2)
+
+  A = merge(B1, B2)
+}
+
+Considering
+
+void merge_sort(const char *file, const char *tmp_file) 
+{
+  FILE *fp = fopen(file, "r");
+
+  if (!fp) {
+    fprintf(stderr, "file %s not found\n", file);
+    exit(1);
+  }
+
+  // compute length of file
+  fseek(fp, 0, SEEK_END);
+  long length = ftell(fp);
+  fclose(fp);
+  
+  merge_sort(file, tmp_file, 0, length);
+
+  // done: remove temporary file
+  remove(tmp_file);
+}
+
+implement the following function that is supposed to sort bytes with index
+start to start+length-1 stored in file using tmp_file as temporary storage:
+
+  void merge_sort(const char *file, const char *tmp_file, long start, long length)
+
+using Problem 6's
+
+  void merge(FILE *fp1, long l1, FILE *fp2, long l2, FILE *fp3);
+
+
+
+
+
+
+
+
+Solution: 
+
+  mergesort.c

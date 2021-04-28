@@ -1,0 +1,823 @@
+Week 04 (L9/10/11)
+
+Topics
+
+· Structures
+· Arrays
+· Pointers
+· C Input
+
+
+Lecture 7 Agenda
+
+- Intro 
+
+- (Mock) Quiz 3A / Solutions
+
+=========================================================================
+
+Intro:                   Address   Variable
+                         on Stack
+  int A[10];                1000   A[0]
+  int i = 3;                1004   A[1]
+  ...                       1008   A[2]
+                            ...
+                            1036   A[9]
+                            1040   i      possible location of i
+                            1044   ...       
+
+  A[i] = 5;  // what happens? A[3] set to 5
+  A[10] = 6; // what happens here? i is set to 6, because we access
+             // the integer stored after A[] on stack (most likely i);
+             // address of A[10]: A + 10 * sizeof(int) = 1040
+  
+  int *p, *q, *r;   // three pointers to int variables (uninitialized)
+
+  p = &A[0];   // take address of A[0] and store it in p, i.e. p = 1000
+  p = A;       // same thing, p points to A[0]
+  p++;         // p points to the int following A[0], namely A[1], i.e.
+               // p = 1004. If A contained doubles, p = 1008
+               // Note that p++ increments the address by sizeof(*p)=4,
+               // rather than 1!
+
+(see bufferoverflow.c for a "working" example)
+
+
+What does this do (p,q are pointers to int) ?
+
+  *p++ = *q++;
+
+Is this legal code assuming p and q are int pointers? Why?
+
+  (*p)++ = (*q)++
+
+What is -7 % 3 ?
+
+  [ Hint: standard states: ((a / b) * b + a % b) == a, and integer division rounds
+          towards 0 ]
+
+
+What does int **p; mean? Draw a picture. How to change the value p indirectly
+points to to 10?
+
+Likewise, what does int ****p; mean? Draw a picture ...
+
+
+[ showed how to use gdb to debug segmentation faults
+
+  1. compile with debug information:  g++ -Wall -Wextra -O -g foo.c
+  2. ./a.out => segmentation fault
+  3. gdb a.out    (launches debugger with executable a.out)
+       run        (runs your program in the debugger, shows offending code line such as *p=5)
+       bt         (backtrace, shows function call history, use up/down/list to navigate)
+       print p    (prints value of p at current location, perhaps p == 0 caused the
+                   segmentation fault)
+
+  Tip: On Linux familiarize yourself with gdb and ddd (its graphical
+       frontend). There are many more useful gdb commands: single step
+       execution, breakpoints, etc. Time spent on this will pay off big as it
+       speeds up fixing pointer related issues considerably. If you are using
+       Visual Studio or XCode on your computer at home, learn how to use their
+       built-in debug facilities
+]
+
+========================================
+
+Q3A Questions
+
+
+1. Describe the following terms in at least two sentences each:
+
+  A. C structure
+  B. C array
+  C. C pointer
+  D. C library function scanf
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Sol: (straight from the notes)
+
+ A.  C structures are collections of variables grouped together under a single
+     name. Structures help organize data, they can be stored in arrays, and
+     passed to and returned from functions.
+
+ B.  C arrays store variables of identical type and allow accessing them by
+     means of indexes. This makes arrays the data structure of choice for
+     sorting and searching alogrithms.
+
+ C.  Pointers are variables that contain addresses of other variables. They
+     are useful for stepping through arrays, linking objects in dynamic data
+     structures, and passing big objects to functions.
+
+ D.  scanf reads words from standard input, converts them into values whose
+     type is given in the format string, and stores them in variables whose
+     addresses have been passed as parameters. If an error occurs or the end
+     of the input is reached, EOF is returned. Otherwise, the number of
+     successfully read variables is returned.
+
+============================================================================
+
+Lecture 8 Agenda
+
+- Pointer intro on whiteboard
+
+- Remaining Quiz 3A Questions / Solutions
+
+- Classroom Problems
+
+--------------
+
+[ motivated pointers, pointer arithmetic, pointer usage for linked lists and
+  trees on whiteboard
+]
+
+Remaining Q3A Questions:
+
+
+2. What is the value of A[0],A[1],A[2] after each of following statements has
+   been executed?
+
+                                                A[0]    A[1]    A[2]
+  int A[3] = { 2, 10 };
+  int *p = &A[0], *q = A + 1, *r = q + 1;
+  *p++ += 10;
+  (*q)++;
+  --*(r-1);
+  *p-- += 1;
+  *p++ += 2;
+  *&*r += 3;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Sol:
+                                         A[0] A[1] A[2]
+  int A[3] = { 2, 10 };                    2  10   0 
+
+[ remaining element initialized with 0 ]
+
+  int *p = &A[0], *q = A + 1, *r = q + 1;  2  10   0   p->A[0], q->A[1], r->A[2]
+  *p++ += 10;                              12 10   0   p incremented -> A[1]
+
+[ same as *(p++) += 10; ]
+
+  (*q)++;                                  12 11   0
+  --*(r-1);                                12 10   0
+
+[ read this right to left: r points to A[2], 
+  r-1 points to A[1], *(r-1) refers to A[1], -- decrements that variable ]
+                                            
+  *p-- += 1;                               12 11   0    p decremented -> A[0]
+  *p++ += 2;                               14 11   0    p incremented -> A[1]
+  *&*r += 3;                               14 11   3    &*r == r
+
+[ r points to an int, *r refers to the variable r points to, &*r takes 
+  the address of that variable, which means we are back to r ]
+
+-----------------
+
+
+
+3. Write a C++ function sum that returns the sum of all elements stored in an
+   int array that is passed to it as parameter
+
+
+
+
+#include <stdio.h>
+
+int sum_array(int A[], size_t n)
+{
+  int sum = 0;
+  for (int i=0; i < n; ++i) {
+    sum += A[i];
+  }
+  return sum;
+}
+
+int main()
+{
+  int A[4] = { 1, 2, 3, 4 };
+  printf("%d\n", sum_array(A), 4);
+  return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Sol:
+
+   /* parameters: int array A, number of elements N
+      computes sum of all elements
+     
+      N needs to be passed separately, because arrays are 
+      passed as pointers to their first element and size 
+      information is lost in the process
+   */
+
+   int sum(int A[], int N) 
+   {
+     int sum = 0; // running total
+
+     // step through the array element by element (indexes 0 .. N-1)
+
+     for (int i=0; i < N; ++i) {
+       sum += A[i];  // A[i] equivalent to *(A+i), which may incur a multiplication. Why?
+     }  
+     return sum;
+   }
+
+   // identical functionality
+
+   int sum(int *p, int N) 
+   {
+     int sum = 0;
+     for (int i=0; i < N; ++i) {
+       sum += *p++;  // adds value p points to to sum
+                     // and increments p thereafter
+     }  
+     return sum;
+   }
+
+   // identical functionality, probably a bit faster
+   // because only one variable is incremented and no
+   // index to memory location computation needed
+
+   int sum(int *p, int N) 
+   {
+     int sum = 0;
+     int *p_end = p + N; // points to N-th successor of p
+                         // - right passed the end of the array
+     while (p < p_end) {
+       sum += *p++;  // adds value p points to to sum
+                     // and increments p afterwards
+     }  
+     return sum;
+   }
+
+   Call example:
+
+   int A[] = { 9, 2, 3, 5 };
+   int s = sum(A, 4);
+   // s = 19
+
+============================================================================
+
+Classroom Problems
+
+============================================================================
+
+Problem 1: Code review
+
+A. Comment on this code:
+
+   void foo()
+   {
+     int a, b, c, d;
+     for (int *p = &a; p <= &d; ++p) {
+       *p = 0;
+     }  
+   }
+
+B. Improve the following code:
+
+   // compute the number of even elements in an array
+
+   size_t even(int A[]) 
+   {
+     size_t count;
+     size_t n = sizeof(A)/sizeof(A[0]);
+     for (int i=0; i < n; ++i) {
+       if (A[i] / 2 * 2 == A[i]) {
+         ++count;
+       }
+     }
+     return count;
+   }
+
+   int A[] = { 0, 1, 2, 3, 4, 5, 6 };
+
+   printf("%d\n", even(A));   // 4 ?
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+A) UNDEFINED BEHAVIOUR! The C++ standard doesn't specify in which order and
+   where a,b,c,d are stored on the stack. Thus, we can't assume that they are
+   stored consecutively or in order. If they are, above code will set them to
+   0. If they are stored in reverse order, the program will not even enter the
+   loop
+
+   Rule: p < q only works for pointers if they point into the the same array
+         (or one element past the last element)
+
+
+B. Improvement:
+
+   size_t even(int A[], size_t n)         // need to pass number of elements 
+   {
+     size_t count = 0;                    // needs to be initialized
+
+     /*
+       doesn't work for array parameters:
+     
+         size_t n = sizeof(A)/sizeof(A[0]);
+     
+       because as parameter int A[] is just a pointer internally,
+       i.e. the size of the array parameters is unknown in functions
+     
+       Here, A is a pointer with size 8 (64-bits), so sizeof(A)/sizeof(A[0])
+       is always 2
+     */
+     
+     for (size_t i=0; i < n; ++i) { // size_t instead of int
+       if (A[i] % 2 == 0) {     // A[i] / 2 * 2 == A[i] works, but A[i] % 2 == 0
+                                // is faster and easier to understand.
+                                // How about negative values?
+                                // Standard states: ((a/b)*b + a%b) = a ...
+         ++count;
+       }
+
+       // equivalent and even faster:  count += (A[i] % 2 == 0); 
+     }
+     return count;
+   }
+
+
+   int A[] = { 0, 1, 2, 3, 4, 5, 6 };
+
+   // valid here because compiler knows size of array A (28 bytes)
+   printf("%d", sizeof(A)/sizeof(A[0]));  // -> 7 
+
+   printf("%d\n", even(A));   // 4 ?
+
+============================================================================
+
+Lecture 9 Agenda
+
+- (Mock) Quiz 3B / Solutions
+
+- Classroom Problems
+
+============================================================================
+
+Quiz 3B Questions / Solutions
+
+===========================================================================
+
+1. Given struct Vec3 { int x, y, z; };
+
+ A. What is sizeof(Vec3) ?
+
+ B. How are Vec3 variables laid out in memory?
+
+ C. Write function init that initializes all components of a Vec3 variable
+    that is passed as a reference with 0
+
+ D. Write function add that returns a Vec3 representing the sum of two Vec3
+    parameters that are passed by reference. Recall from linear algebra that
+    vectors are added component-wise
+
+
+2. Write function main that prints the number of characters it reads from
+   standard input before either the end of file is reached or a read error
+   occurs. Use C library function getchar()
+
+
+   (reminder: getchar() returns EOF if and only if the end of input is reached
+    or a read error occurred. Otherwise, the read operation was successful and
+    the read character is returned)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solutions:
+
+1. Given struct Vec3 { int x, y, z; };
+
+ A. What is sizeof(Vec3) ?
+
+    sizeof(Vec3) = 3*sizeof(int) = 12
+
+ B. How are Vec3 variables laid out in memory?
+
+    int x  (4 bytes)
+    int y  (4 bytes)
+    int z  (4 bytes)
+
+ C. Write function init that initializes all components of a Vec3 variable
+    that is passed as a reference with 0
+
+    void init(Vec3 &v) 
+    {
+      v.x = v.y = v.z = 0;
+    }
+
+ D. Write function add that returns a Vec3 representing the sum of two Vec3
+    parameters that are passed by reference. Recall from linear algebra that
+    vectors are added component-wise
+
+    Vec3 add(const Vec3 &v, const Vec3 &w)
+    // also possible, but slower: Vec3 add(Vec3 v, Vec3 w)
+    {
+      Vec3 result;
+      result.x = v.x + w.x;
+      result.y = v.y + w.y;
+      result.z = v.z + w.z;
+      return result;
+    }
+
+
+    - const is optional - guards against accidental parameter changes
+  
+    - passing by reference is faster than passing by value in this case,
+      because copying Vec3 objects takes longer than just passing addresses.
+
+2. Write function main that prints the number of characters it reads from
+   standard input before either the end of file is reached or a read error
+   occurs. Use C library function getchar()
+
+   #include <stdio.h>
+
+   int main() 
+   {
+     int count = 0;
+
+     while (getchar() != EOF) {
+       putchar();
+       ++count;
+     }
+
+     printf("%d\n", count);
+     return 0;
+   }
+
+   You can test the result by issuing ls -l and then redirecting a file of
+   known size like so: ./a.out < file and comparing the output with the file
+   length
+
+============================================================================
+
+Classroom Problems
+
+============================================================================
+
+Problem 2: Implement C library function
+	
+  // pre-cond: n bytes available at address dst
+  void memcpy(char *dst, const char *src, size_t n);
+
+that copies n consecutive bytes from address src to dst
+
+(size_t is a system dependent unsigned integer type that has the same size as
+pointers. It's defined in stddef.h)
+
+Application:
+
+  const size_t N = 100;
+  char from[N] = { 0 }, to[N];
+  memcpy(to, from, N); // now all to[i] = 0, too
+
+  char to2[10];
+  memcpy(to2, from, N); // ERROR: to2 too small, memory written beyond to2
+
+  char to3[1000];
+  memcpy(to3, from, N); // OK: first 100 bytes of to3 overwritten
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+
+  void memcpy(char *dst, const char *src, size_t n)
+  {
+    for (size_t i=0; i < n; ++i) {
+      *dst++ = *src++;
+    } 
+  }
+
+
+or equivalent:
+
+
+  void memcpy(char *dst, const char *src, size_t n)
+  {
+    for (size_t i=0; i < n; ++i) {
+      dst[i] = src[i];
+    } 
+  }
+
+
+
+Note: The library implementation of memcpy is faster than this implementation
+      because it will copy multiple bytes at a time, exploiting that the
+      memory is organized as multi-byte words
+
+
+============================================================================
+
+Problem 3A:    Consider      struct X 
+                             { 
+                               char   a;                      
+                               int    b;
+                               short  c;                      
+                               double d;                      
+                             };         
+
+  A) How shall a variable of type X be laid out in memory to maximize access
+     speed on a computer with word size 4 (bytes)?
+
+  B) What does   X x, y;  x = y;  exactly do?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+  A)
+
+    Addr  Content
+    x     char   a;                    
+    x+4   int    b; // align to address divisible by 4 (1 memory access instead of 2)
+    x+8   short  c;                    
+    x+12  double d; // align to address divisible by 4 (2 memory accesses instead of 3)
+    x+20
+    
+    sizeof(X) = 20
+
+  B)  X x, y;  // two variables of type X are allocated on stack
+      x = y;   // assigns all components separately:
+
+      x.a = y.a;
+      x.b = y.b;
+      x.c = y.c;
+      x.d = y.d;
+
+============================================================================
+
+Problem 3B.    Consider      struct X 
+                             { 
+                               char   a;                      
+                               int    b;
+                               short  c;                      
+                               double d;                      
+                             };         
+
+  C) Write function init_X_A that initializes a variable of type X 
+     that is passed by reference with a = 1, b = 2, c = 3, d = 4
+
+     Write function init_X_B that does the same, but gets passed a pointer to
+     the variable
+
+     Write function init_X_C with which X variables can be initialized like
+     so:
+
+       X x = init_X_C();
+
+  D) What is the size of the following array:
+
+           X foo[100]; 
+
+     and how to make sure that all elements are initialized according to part C) ?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+  C)   void init_X_A(X &x) 
+       {
+         x.a = 1; 
+         x.b = 2;
+         x.c = 3;
+         x.d = 4;
+       }
+
+       void init_X_B(X *x) 
+       {
+         x->a = 1; 
+         x->b = 2;
+         x->c = 3;
+         x->d = 4;
+       }
+
+       X init_X_C() 
+       {
+         X x = { 1, 2, 3, 4 };
+	 return x;
+       }
+
+   D)  X foo[100]; is an array that contains 100 X variables.
+       Assuming sizeof(X) = 20, the size of foo is 2000
+
+       Initialize with loop using function init_X_A:
+
+       for (int i=0; i < 100; ++i) {
+         init_X_A(foo[i]);
+       }
+
+============================================================================
+
+Problem 4
+
+Implement function reverse that reverses the order of elements in an int array
+that is passed as parameter
+
+   int A[] = { 1, 2, 3, 4 };
+
+   // result of reverse applied to A: A[] = 4 3 2 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+    // swaps two ints using triangle exchange
+    void swap(int &x, int &y)
+    {
+      int tmp = x; x = y; y = tmp;
+    }
+
+    // reverse array A of length N
+    void reverse(int A[], size_t N)
+    {
+      /*
+        swap A[0] with A[N-1],
+             A[1] with A[N-2], ...
+        until the half-way point is reached
+
+        Example:    A =  1 2 3 4
+        after 1. swap    4 2 3 1
+        after 2. swap    4 3 2 1
+      */
+
+      for (size_t i=0; i < N/2; ++i) {
+        swap(A[i], A[N-1-i]);
+      }
+    }
+
+    int main()
+    {
+      int A[] = { 1, 2, 3, 4 };
+      // only works in the code block A[] was declared
+      const size_t N = sizeof(A)/sizeof(*A);
+
+      reverse(A, N);
+
+      // expected: 4 3 2 1
+      for (int i=0; i < N; ++i) {
+        printf("%d\n", A[i]);
+      }
+    }
+
+============================================================================
+
+Problem 5
+
+Write a C function that computes the median of all values stored in an int
+array of size N. The median is defined as follows:
+
+- If N is odd, the median is the element m for which exactly (N-1)/2
+  elements are ≤ m and (N-1)/2 elements are ≥ m
+
+- If N is even, the median is the average of the two elements a ≤ b in the
+  array for which N/2 elements are ≤ a and N/2 elements are ≥ b
+
+Example:   A = 4 2 1 5 3  median = 3, because 1,2,3 ≤ 3 and 3,4,5 ≥ 3
+           A = 9 8 7 2    median = 7.5, because 2,7 ≤ 7 = a and 8,9 ≥ 8 = b
+
+
+Note: the function may reorder the array elements
+
+Solution:  see median.c

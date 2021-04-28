@@ -1,0 +1,555 @@
+Week 02 (L3/4/5)
+
+L3 Agenda
+
+- Mock Quiz 1A + Solutions
+
+=========================================================================
+
+Mock Quiz Q1A:
+
+1. How many bytes in memory?
+
+   int a;              
+   double b;           
+   unsigned short c;   
+   char d;             
+
+2. Maximum value?
+
+   unsigned char a;    
+   char b;             
+   signed short c;     
+   unsigned short d;   
+
+-
+3. Evaluating expressions:
+
+  int x = 47;  
+  int y = 28;  
+
+  int  a = (x > 10);     
+  int  b = x / y;        
+  int  c = x % y;        
+  bool d = x && y;       
+  bool e = x || y;       
+  int  f = ++x;          
+  int  g = x--;          
+  bool h = (x != 47);    
+
+-
+4. Write C code that prints integers 1..1000 to stdout
+
+-
+5. Command line to create optimized executable foo from foo.c emitting all
+   warnings
+
+
+
+
+
+
+
+
+============================================================================
+
+Quiz Solutions:
+
+1. How many bytes in memory?
+
+   int a;              4
+   double b;           8
+   unsigned short c;   2
+   char d;             1
+
+
+2. Maximum value?
+
+   unsigned char a;    255     = 2⁸ - 1
+   char b;             127     = 2⁷ - 1
+   signed short c;     32767   = 2 ¹⁵ - 1
+   unsigned short d;   65535   = 2 ¹⁶ - 1
+
+
+Also discussed:
+
+- ASCII table (character encoding)
+- number representation (2s-complement number circle)
+  unsigned vs signed
+
+
+
+
+
+
+
+
+--------------------------
+
+
+3. Evaluating expressions:
+
+  int x = 47;  
+  int y = 28;  
+
+  int  a = (x > 10);     a = 1        ; bool converted to int
+  int  b = x / y;        b = 1        ; rounded towards 0
+  int  c = x % y;        c = 19       ; remainder
+
+  bool d = x && y;       d = true     ; x,y != 0 => regarded as true,
+                                        true && true = true
+  bool e = x || y;       e = true     ; x != 0 => true, y not evaluated
+
+  int  f = ++x;          f = 48;          ; first increment x, 
+                                          ; expr. value is result
+  int  g = x--;          g = 48;          ; expr. value is taken first,
+                                          ; then x is decr.
+  bool h = (x != 47);    h = false        ; x = 47 at this time
+
+--------------------------
+
+
+
+
+
+
+
+
+4. Print integers 1..1000:
+
+  File q1a-4.c contains:
+
+  #include <stdio.h>       // make printf and other std.functions known
+
+  int main()
+  {
+    int i = 1;             // define and initialize counter
+    while (i <= 1000) {    // execute block until i > 1000
+      printf("%d\n", i);   // print integer followed by newline
+      ++i;                 // increment counter
+    }
+    return 0;
+  }
+
+
+
+
+
+
+
+
+
+
+
+----------------------
+
+
+5. Command line to create foo from foo.c :
+
+[ -Wall: almost all warnings
+  -Wextra: more warnings (see man gcc)
+  -O: optimize code
+  -o file: save executable as file 
+]
+
+  g++ -Wall -Wextra -O -o foo foo.c     // C++ program
+
+or
+
+  gcc -Wall -Wextra -O -o foo foo.c     // C program
+
+[tired of typing that many options? Try using bash functions or aliases
+(covered in Lab 00)]
+
+=========================================================================
+
+L4 Agenda
+
+- Mock Quiz 1B + Solution
+
+- Classroom Problems
+
+--------------------
+
+Mock Quiz 1B (definitions)
+
+
+Give definitions for the following terms:
+
+- Floating-Point Number
+
+- Variable Definition
+
+- Sequence Point
+
+- Compiler
+
+- von Neumann Architecture
+
+- Operating System
+
+- Command Shell
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+                                                          k
+Floating-Point Number:  Rational numbers of the form m * 2  where 
+                        m and k are integers. Useful for scientific
+                        computations because floating-point numbers
+                        span a large number range.
+
+Variable Definition:    Consists of a type followed by a variable name
+                        (e.g., int x;). The compiler now lets you work
+                        with that variable and also ensures that memory
+                        is allocated for it at runtime.
+
+Sequence Point:         A location in a program where all previous
+                        statements have been executed before proceeding.
+
+                        Example:   x++ ; --y  
+
+                        Here we can assume that x has been incremented before
+                        proceeding to decrementing y
+
+Compiler:               A program that translates high-level programs
+                        into machine code that can be executed by the CPU.
+                        In this process the compiler will check programs
+                        for syntactic correctness and print error messages if 
+                        something is wrong.
+
+von Neumann Architecture:  A Central Processing Unit (CPU) executes 
+                           machine instructions read from main memory 
+                           which can be thought of a sequence of small 
+                           integers. There is no distinction between
+                           machine code and data stored in memory.
+                           Typically, CPUs read memory content into
+                           registers, manipulate registers, and store
+                           register values back to memory.
+
+Operating System:  A program that forms the interface between hardware
+                   such as memory and graphics cards and user programs.
+                   This unifies how programs communicate with hardware
+                   components, resulting in hardware independent programs
+                   that can run on all computer architectures that support
+                   the chosen operating system (e.g. Linux).
+
+Command Shell: A program that interacts with users who use a command terminal,
+               by interpreting issued keyboard commands and executing
+               operating system commands.  Most command shells support command
+               aliases, command line editing, and scripting.
+
+---------------------
+
+Problem 1 (bugs)
+
+  What is wrong with the following code snippets?
+
+  A)  unsigned int i = 5;
+      while (i >= 0) {
+        // ... do stuff
+        i--;
+      }
+
+  B)  int a = 5;
+      double b = 6.375;
+      int c = 300;
+      printf("a=%f b=%d c=%%d \", a, b, c);
+
+  C)  float a = 0;
+      while (a != 3.3) {
+        // ... do stuff
+        a = a + 0.1;
+      }
+
+
+
+
+
+
+
+
+
+
+Sol:
+
+A) The loop will never end because i is an unsigned integer and as such,
+   always >= 0.
+
+B) Wrong format strings, %%d prints %d  (%% -> %), string not terminated
+   (\" is not end of string but single character ")
+
+   g++ -Wall -Extra ... will catch those errors
+
+C) Loop will not stop after 33 iterations because 0.1 and 3.3 have no exact
+   floating point representation (all floating point numbers are integer
+   multiples of powers of 2). So, a will come close to 3.3 but not exactly
+   reach it.  On the other hand, if you replace 3.3 by 3 and 0.1 by 0.25, the
+   loop would terminate, because 3 and 0.25 can be represented exactly
+   (integer multiples of integer powers of 2).
+
+Take home messages:
+
+- avoid floating point arithmetic as much as possible
+
+- don't use == and != for floating point numbers (use < or > instead)
+  E.g.  replace x == 0  by  fabs(x) < 1e-10  (man fabs for details)
+
+- read:
+
+  Goldberg 1991:
+  "What Every Computer Scientist Should Know About Floating-Point Arithmetic"
+
+----------------------------------
+
+Problem 2
+
+[A similar problem young Carl Friedrich Gauss solved within minutes (meant to
+keep him busy for a while during detention in school)]
+
+  What is the output of the following program?
+
+  #include <stdio.h>
+
+  int main()
+  {   
+    int sum = 0;
+    int i = 1;
+
+    while (i <= 100) {   
+      sum = sum + i;     
+      i++;      
+    }     
+
+    printf("%d\n", sum);
+    return 0;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+Sol: We initialize i with 1 and in the loop count up to 100 (including).
+     While doing this we sum up all values of i in variable sum.
+     So, in the end, sum = 1 + 2 + 3 + ... + 100
+
+     This is an arithmetic series. The first and last element sum up to 101,
+     as does the next pair (2 + 99), etc. We have 50 pairs. Thus, the sum is
+     50*101 = 5050. In general: 1+2+3...+n = n(n+1)/2 for all n ≥ 1
+
+-------------------------
+
+Part 2 pp.1-28 discussion continued
+
+- overflow examples, "wrap-around" arithmetic 
+  (see two's complement number representation on Wikipedia)
+
+  It is important to pick the right variable type to avoid overflows
+
+  I.e.,  signed char c = 127;
+         ++c;
+         // c now -128
+
+  See: overflow.c and overflow2.c for examples how the runtime system can
+  detect integer overflows using the -fsanitize=undefined compiler options
+
+- integer division: rounding towards 0
+
+  int x = -5 / 2;  // -2
+  int y =  5 / 2;  //  2
+
+- how to print % \ " ?  
+
+  %% \\ \" in printf format string
+
+----------------------------
+
+Part 2 part 1 pp.1-28 discussion (continued)
+
+- mixing int / float (silently converting int into double)
+
+  int x = 2 + 3.5;
+
+  int + double => double + double   2.0 + 3.5 = 5.5
+
+  convert resulting double to int rounding towards 0 yields x = 5 
+
+- value of assignments in code such as 
+
+    if (c = 0) ...
+
+  It's the value that was assigned converted to bool
+
+  E.g. false in this example.  (0 => false, not 0 => true)
+
+  Good compilers will warn about such code (c == 0 was probably meant)
+
+  if (d = 1) {
+    printf("foo");      // executed or not?
+  }
+
+
+- why does it say:  y = y && n++;  // DANGER!   
+
+  in the notes?
+
+  What are y,n's values when starting with  int y = 1, n = 2;   ?
+  What happens for int y = 0, n = 1; ?
+
+
+
+
+
+
+
+
+
+
+
+
+  because n is not always incremented - only if y != 0 
+
+  (shortcut && doesn't evaluate the second term if first is false, and
+   likewise: shortcut || doesn't evaluate the second term if first is true)
+
+============================================================================
+
+L5 
+
+- Classroom problems
+
+=========================================================================
+
+Problem 3  What's wrong with the following code snippets?
+
+ A) x = x++;
+
+ B) ++(x + y);
+
+ C) int a = (--x) + (x++)
+
+ D) enum Color  { YELLOW, GREEN, BROWN, ORANGE, BLUE };
+    enum Fruit  { APPLE, ORANGE, PLUM };
+
+    Color c = GREEN;
+    enum Fruit f = BLUE;
+
+
+
+
+
+
+
+
+
+
+
+
+Sol.:
+
+  A) x = x++;  
+
+     The value of x is undefined because x may be incremented at any time
+     before reaching sequence point ; In particular, the order of = and
+     ++ is unspecified. I.e. consider the following two ways of actually
+     executing the statement:
+
+     sequence 1:    x = x            sequence 2: y = x (remember x)
+                    increment x                  increment x
+                    ;                            x = y
+                                                 ;
+
+     Both sequences compute different values for x!
+
+     In general, if an expression between two sequence points writes 
+     to a variable more than once, the result is undefined
+
+   B) ++(x + y); is invalid code, because ++ and -- can only be
+      applied to "lvalues" (expressions we can take the address of or
+      assign to), but not to expression results (which are temporary
+      unnamed variables)
+
+      What the programmer maybe meant was:   int z = x + y + 1;
+
+   C) int a = (--x) + (x++) 
+
+      ; is missing
+
+      Also, the evaluation order of (--x) and (x++) is unspecified.  Suppose
+      we start with x = 5:
+
+        1.  (--x)   decrement first (4), value 4
+            +			                    
+            (x++)   value 4, increment x (now 5)   
+      
+            = 8 and x = 5                          
+
+        2.  (x++)   value 5, increment x (6)
+            +				      	   
+            (--x)   decrement x (5), value 5
+                                       
+            = 10 and x = 5                          
+
+
+ D) enum Color  { YELLOW, GREEN, BROWN, ORANGE, BLUE };
+    enum Fruit  { APPLE, ORANGE, PLUM };
+
+    Color c = GREEN;       // OK in C++, invalid in C: need to say enum Color
+    enum Fruit f = BLUE;   // shouldn't assign a color to fruit
+
+    Also:  ORANGE used twice - not allowed
+
+
+--------------------
+
+Problem 4  (multiplication without *)
+
+  For some strange reasons the multiplication circuit on your computer's CPU
+  just broke.
+
+  Write a C program that given int a, b with b >= 0, writes the value of 
+  (a * b) to standard output without using * and /
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Sol: see file mult.c
+
+----------------------
+
+
+Problem 5 (division without * / %)
+
+  Write a C program that given int a, b with a >= 0 and b > 0, writes the
+  value of (a / b) and (a % b) to standard output without using * / %
+  operators
+
+
+Sol: see file divmod.c

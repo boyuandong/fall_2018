@@ -1,0 +1,513 @@
+Week 06 (L15/16)
+
+Topics
+
+· C Preprocessor
+· Macro Substitution
+· Conditional Compilation
+· File Inclusion
+· Modular Programming
+· Makefiles
+
+============================================================================
+
+Lecture 15 Agenda
+
+- (Mock) Quiz 5A / Solutions
+
+- Classroom Problems
+
+=========================================================================
+
+1. Describe the following terms in at least two sentences each:
+
+  A. C preprocessor
+
+  B. Program modularization
+
+  C. Purpose of makefiles
+
+  D. Makefile pattern rules
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+  A. C preprocessor
+
+     In the first pass of program compilation the C preprocessor scans the
+     input for preprocessor statements that deal with including other
+     files and macro definition and expansion. The result is then passed
+     to the C compiler. C's modularization is based on the preprocessor
+     include file facility
+
+  B. Program modularization
+
+     The general concept of solving big problems by combining solutions to
+     smaller problems. In C and C++, we write functions for simple tasks and
+     call them to solve more complex problems. This simplifies program
+     testing, increases code readability, and speeds up programming in teams
+
+  C. Purpose of makefiles
+
+     Makefiles contain recipies for creating files that depend on others.
+     When running make, it will detect what file has to be rebuilt based
+     on time stamps. This process speeds up compilation because only parts
+     that have changed need to be recompiled
+
+  D. Makefile pattern rules
+
+     Makefile rules are often repetitive, such as
+
+     foo.o : foo.c foo.h
+     <tab>   g++ -c -o foo.o foo.c
+
+     bar.o : bar.c bar.h
+     <tab>   g++ -c -o bar.o bar.c
+
+     To simplify makefiles, pattern rules were added that allow
+     us to express a list of rules like above in one line. E.g.
+
+     %.o : %.c
+     <tab>   g++ -c -o $@ $<
+
+     This pattern rule states how .o files are created from .c files in
+     general:
+
+     If the .c file is younger than its .o file, invoke the compiler to update
+     the .o file
+
+     [ recall: $@ = rule target, $< first prerequisite ]
+
+============================================================================
+
+2. What is the C preprocessor output for this input:
+
+#define FOR(i,n) for (int i=0; i < (n); ++i)
+#define PRINT(x) printf(x)
+#define LINUX
+#ifndef LINUX
+FOR (j, 10) { PRINT("FOO"); }
+#else
+FOR (k, 20) { PRINT("BAR"); }
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+#define FOR(i,n) for (int i=0; i < (n); ++i)
+#define PRINT(x) printf(x)
+#define LINUX
+#ifndef LINUX
+FOR (j, 10) { PRINT("FOO"); }
+#else
+FOR (k, 20) { PRINT("BAR"); }
+#endif
+
+Output:
+
+for (int k=0; k < (20); ++k) { printf("BAR"); }
+
+(can be viewed by running g++ -E input.c)
+
+
+============================================================================
+
+3. Given module files f1.c and f2.c which both depend on f.h, complete the
+   following makefile so that it compiles f1.c and f2.c with g++ only when
+   necessary and builds executable f from the object files:
+
+f: f1.o f2.o               
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+<tab>  g++ -o f f1.o f2.o     # linking
+
+f1.o : f1.c f.h
+<tab>  g++ -c -o f1.o f1.c    # compiling
+
+f2.o : f2.c f.h
+<tab>  g++ -c -o f2.o f2.c    # compiling
+
+
+
+or using a pattern rule:
+
+f: f1.o f2.o               
+<tab>  g++ -o f f1.o f2.o     # linking
+
+%.o : %.c 
+<tab>  g++ -c -o $@ $<        # compiling
+
+# Dependencies generated with g++ -M *.c
+f1.o : f1.c f.h
+f2.o : f2.c f.h
+
+============================================================================
+
+Demo including standard include files and using g++ -E to see the result of
+the preprocessor
+
+============================================================================
+
+Classroom Problems
+
+
+Problem 1
+
+What does the following program print?
+
+#include <cstdio>
+
+char foo()
+{
+  return 'a';
+}
+
+// what is the output?
+
+int main()
+{
+  float x = 1.0;
+  // use %zu for printing sizeof values (unsigned 8 bytes on lab computers)
+  printf("%zu\n", sizeof(5));
+  printf("%zu\n", sizeof(x));
+  printf("%zu\n", sizeof(3+x));
+  printf("%zu\n", sizeof(&x));
+  printf("%zu\n", sizeof(x++));
+  printf("%f\n", x);
+  printf("%zu\n", sizeof(foo()));
+  printf("%zu\n", sizeof(&foo));
+  return 0;
+}
+
+
+Solution: see sizeof.c
+
+============================================================================
+
+Lecture 16 Agenda
+
+- Staring at code ...
+
+- (Mock) Quiz 5B / Solutions
+
+- Classroom Problems
+
+===========================================================================
+
+- What does this code print?
+
+#include <stdio.h>
+int main(){char q=34,n=10,*a="#include <stdio.h>%cint main(){char q=34,n=10,*a=%c%s%c;printf(a,n,q,a,q,n);}%c";printf(a,n,q,a,q,n);}
+
+  Hint: The ASCII code for " is 34 and the code for \n is 10
+
+  E.g., printf("%c", 34); prints " 
+
+  man ASCII describes the ASCII code
+
+See: mystery.c and mystery-explanation
+
+============================================================================
+
+Quiz / Solutions:
+
+1.  Discuss at least two advantages of code modularization
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Sol:
+
+    - Simplifies testing: modules can be tested separately and when sure that
+      they work, their interaction can be tested.
+
+    - Speeds up writing code: team members can work on different functions
+      independently.
+
+    - Speeds up compilation: only parts that have been changend need to be
+      recompiled and make, using the -j option, can compile modules in
+      parallel.
+
+
+
+----
+
+2.  Given k CPU cores, how much faster can projects be compiled with make
+    compared to single core systems in the best case? Explain
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Sol:
+
+    Invoking make with -j k allows it to spawn as many as k concurrent
+    compilations. This can speed up compilation by up to a factor of k on a
+    computer with k CPU cores
+
+----
+
+3.  Consider the following preprocessor code
+
+    // multiply a with b and then add c
+    #define MULT_AND_ADD(a,b,c) (a * b + c)
+
+    and construct an example for which when applied to specific
+    arguments it doesn't work as expected
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Sol:
+
+    // multiply a with b and then add c
+    #define MULT_AND_ADD(a,b,c) (a * b + c) 
+
+    doesn't work as intended in the following scenario:
+
+      int a = MULT_AND_ADD(1+1,1+1,0);
+
+    we expect a = 4 but get 3, because the macro expands to
+
+      (1+1 * 1+1 + 0) = 3
+
+    This problem can be fixed by adding parentheses:
+
+      #define MULT_AND_ADD(a,b,c) ((a) * (b) + (c)) 
+
+
+============================================================================
+
+Problem 2 (conditional compilation + makefiles)
+
+A. Out-of-bounds errors are hard to track in C. To improve the safety of your
+   program you decide to use the following array access function
+
+      int &acc(int A[], int N, int i)
+
+   that returns a reference to A[i] and if macro NDEBUG ("No Debugging") is
+   not defined, checks whether i is out of range (N is the number of elements
+   of A)
+
+   If an error occurs, acc prints an error message and stops execution
+
+   Example:
+
+   int main()
+   {
+     const int N = 100;
+     int A[N] = { 0 }; // initialize all elements with 0
+
+     int x = acc(A, N, 5);    // get array element; OK
+     acc(A, N, 0) = 3;        // set array element; OK
+     int y = acc(A, N, 100);  // NOT OK => program stops in debug mode
+     return 0;
+   }
+
+B. How to invoke g++ to generate code with index check and without?
+
+C. Write a makefile that allows you to switch between debug and release code
+   by commenting/uncommenting two lines, even if your program consists of many
+   modules
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+Recall that acc needs to return a ***reference*** (indicated by &) to a
+variable rather than a copy
+
+This is because we want to be able to assign values like so acc(A, N, 2) = 1
+
+By returning a reference to A[i] this is equivalent to A[2] = 1, which works,
+because A[2] is a named variable to which a value can be assigned
+
+Also recall that internally, references are represented as pointers
+
+So, under the hood for acc(A, N, 2) = 1; the following code is executed:
+
+  acc(A, N, 2) returns a reference to A[2],
+  which is represented as pointer (say p)
+
+  Then *p = 1 is executed
+
+
+Solution:  see acc/  main1.c  main2.c  main3.c
+
+Instructive article: 
+
+http://cnicholson.net/2009/02/stupid-c-tricks-adventures-in-assert/
+
+
+============================================================================
+
+Problem 3
+
+Write files string.h and string.c in which you declare and implement the
+palindrome function that returns true if and only if a string reads the same
+way in either direction. E.g. "otto", "wasitaratisaw", "".
+
+In main.c write test code. Also write a makefile for this project
+
+Sol:  see palin/
+
+
+string.c
+
+#include <string.h>
+
+bool palindrome(const char *s)
+{
+  //   otto
+  size_t n = strlen(s);
+  for (size_t i=0; i < n/2; ++i) {
+    if (s[i] != s[n-i-1]) {
+      return false; 
+    }
+  }
+  return true;
+}
+
+
+===========================================================================
+
+Problem 4
+
+Suppose in debug mode (NDEBUG undefined) in your C++ program you'd like to set
+pointers to 0 after each call of delete to prevent further usage, like so:
+
+  int *p = new int[1000];
+  ...
+  delete [] p;
+  p = 0;
+  ...
+  *p = 1;  // stops program due to segmentation fault in debug mode
+
+and in release mode (NDEBUG defined) -- to save time -- you don't want to set
+pointers to 0
+
+Write macro DELETE_ARRAY that accomplishes above task, i.e., above code could
+be written as
+
+  int *p = new int[1000];
+  ...
+  DELETE_ARRAY(p);
+  ...
+  *p = 1;  // stops program due to segmentation fault in debug mode
+
+
+
+See: p4.c

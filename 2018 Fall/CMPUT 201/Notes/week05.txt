@@ -1,0 +1,807 @@
+Week 05 (L12/13/14)
+
+Topics
+
+· C-strings
+· C-string library functions
+· C-string input and output
+· Command line parameters
+· typedef
+· Dynamic memory allocation in C and C++ (malloc/free vs. new/delete)
+
+============================================================================
+
+Lecture 12 Agenda
+
+- Showed LaTex => pdf translation
+
+- Quiz 4A + Solutions
+
+============================================================================
+
+Q4A Solutions:
+
+1. Describe the following terms in at least two sentences each:
+
+  A. C-string
+
+     C-strings are character arrays containing sequences of characters which
+     are terminated by \0 - the 0 byte. C-string constants are texts delimited
+     by double quotes. E.g. "I am a string"
+
+  B. Command line parameters of function main
+
+     The main function has the following prototype:
+
+       int main(int argc, char *argv[])
+
+     The parameters give main access to arguments passed from the command
+     shell: argc ("argument count") is the number of passed on words, argv
+     ("argument vector") is an array containing the words.
+
+  C. typedef
+
+     typedef creates new types from old, which makes code more readable and
+     portable. E.g.
+
+          typedef int sint4;           // signed 4-byte int
+          typedef unsigned int uint4;  // unsigned 4-byte int
+  
+          uint4 x; // much shorter and clearer now
+
+    [ typedef and structs in C :
+
+      typedef can also be used to get around C insisting on struct in front of
+      struct types - which is annoying:
+
+        struct Point { int x, y; };  // (*)
+
+        struct Point p;  // struct needed in C, but not in C++
+
+
+      Why do we need ; at the end of line (*) ?
+
+      Because we can actually define a list of variables of the struct type on
+      the spot!
+
+        struct Point { int x, y; } p, q;   // 2 points
+
+      We can also omit the struct name altogether:
+
+        struct { int x, y; } p;   // a point
+
+      Here is where typedef enters the scene: it defines new type
+      names using variable definition syntax. So, this works:
+
+        typedef struct { int x, y; } Point;
+
+        Point p, q;  // hurray, now this works in C as well, no struct needed
+
+      In modern C++ typedef is discouraged, use "using" instead. E.g.
+
+        using sint4 = signed int;
+        using cintptr = const int *;
+    ]
+
+
+  D. Dynamic memory allocation
+
+     Dynamic memory allocation is essential for creating persistent data
+     structures on the memory heap that outlive function calls. For this
+     purpose C and C++ provide functions for allocating and freeing memory.
+     Unlike Java or Python, memory has to be released explicitely
+
+------------
+
+2. Describe why reading C-strings from standard input can be unsafe and what
+   can be done about it
+
+   When reading strings from standard input one has to ensure that the
+   character arrays for storing such strings are big enough. Otherwise, memory
+   passed the end of the arrays may be accessed, leading to undefined program
+   behaviour. To address this problem, functions such as fgets and scanf with
+   length limitation shall be used
+
+------------
+
+3. Complete the following code:
+
+// create a clone of array A which contains N elements on heap, and return a
+// pointer to it
+
+int *clone(const int A[], int N)
+{
+  // use malloc ...
+
+  // allocate enough memory
+  int *p = (int*) malloc(N * sizeof(A[0]));
+
+  // copy all elements
+  for (int i=0; i < N; i++) {
+    p[i] = A[i];
+  }
+  
+  return p;
+}
+
+int A[] = { 1, 2, 3, 4 };
+int *B = clone(A, 4); // create clone of A on the heap
+
+// B no longer used, release memory here ...
+free(B);
+
+============================================================================
+
+Lecture 13 Agenda
+
+- Classroom Problems
+
+============================================================================
+
+Problem 1
+
+Implement above clone function using C++'s new/delete
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+int *clone(const int A[], int N)
+{
+  // use new ...
+
+  // allocate enough memory
+  int *p = new int[N];
+
+  // copy all elements
+  for (int i=0; i < N; ++i) {
+    p[i] = A[i];
+  }
+  return p;
+}
+
+int *B = clone(A, 4);
+
+// B no longer used, release memory here 
+// using [] is important - it matches new []
+
+delete [] B;
+
+
+============================================================================
+
+Problem 2 
+
+  Consider the following program invocation:
+ 
+   ./foo abcd foo bar moo
+
+  - How are the command line arguments stored in memory?
+
+  - What is the minimum total space required for storing all arguments?
+
+
+  int main(int argc, char *argv[]);
+
+  int main(int argc, char **argv);   // same?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+ int main(int argc, char *argv[]) { ... }
+
+ The argv array is probably stored on the heap (its length isn't known at
+ compile time)
+
+ Its length and a pointer to its first element are passed on to main
+
+ sizeof argc: 4 (int)
+ size of argv: 8 (pointer to char pointer array)
+ size of entire argv array: 5 * 8 = 40 bytes (5 pointers)
+
+ | argv[0] | --> ./foo\0  somewhere on the heap
+ | argv[1] | --> abcd\0   somewhere on the heap
+ | argv[2] | --> foo\0    somewhere on the heap
+ | argv[3] | --> bar\0    somewhere on the heap
+ | argv[4] | --> moo\0    somewhere on the heap
+
+ The minimum memory requirement for the arguments is:
+
+ 4 + 8 + 40 + (6 + 5 + 4 + 4 + 4) = 75 bytes
+
+--------------
+
+Problem 3
+
+Suppose you want to print the program name with which the program was started
+
+  E.g.,  ./foo a b c  => print ./foo
+
+Would  printf(argv[0]); work?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+printf(argv[0]); doesn't work in all cases. If the string contains a format
+strings like %f or %d, then the output is incorrect because we are only
+passing a single parameter, where we would need to pass at least one more.
+
+E.g., printf(argv[0]) = printf("%s")  ... undefined behaviour
+
+To also work for invocations like  ./%s a b c, we need to use
+
+  printf("%s", argv[0]);
+
+---------------
+ 
+
+Problem 4
+
+Is the following code legal C code - and if so, what does it print?
+
+   int x = 3;
+   printf(x + "0123456789");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+This code is valid. It prints 3456789 
+
+"0123456789" is a character array stored in a read-only data segment of the
+process
+
+When used in assignments or as function parameter, the type of "..." is const
+char *, and the corresponding value is a pointer to the first character
+
+So, x + "0123456789" adds 3 to the const char* producing a new const char*
+that points to "3456789", which is passed to printf
+
+
+---------------
+ 
+Problem 5
+
+Suppose you have an integer x with values 0..15, which represents a digit in
+base 16 (written as 0..9A..F) and you want to print the digit
+
+E.g., 5 would be printed for x=5, and B would be printed for x=11
+
+Write code for above task without using format string %x, if, for, do,
+while, switch
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+  int x = 3;  // 0..15
+  printf("%c", "0123456789ABCDEF"[x]);
+
+Again, "..." is a pointer to the first byte of a character array. In this
+expression we are accessing the x'th element via [x]
+
+The code is equivalent to:
+
+  const char *hex = "0123456789ABCDEF";
+
+  printf("%c", hex[x]);  // or printf("%d", *(hex+x));
+
+
+[ Also talked about if-less code, no () in return statements,
+  and avoiding verbosity such as:
+
+  if (x) {
+    return true;
+  } else {
+    return false;
+  }
+
+============================================================================
+
+Lecture 14 Agenda
+
+- Undefined Program Behaviour
+
+- Warm-up
+
+- Classroom Problems
+
+===========================================================================
+
+Added a page on undefined program behaviour which gets rigerously exploited by
+modern compilers in the sense that they optimize code assuming it is
+well-defined
+
+E.g.  int x;
+      ...
+
+      ... x + 1 > x   => optimized to being true all the time
+
+      because signed overflow is undefined behaviour =>
+
+      x != MAX_INT in x+1 => x+1 > x
+
+https://skatgame.net/mburo/courses/201/material/etc/undef.html
+
+============================================================================
+
+Warm-up Questions:
+
+
+A. What are advantages of new/delete over malloc/free ?
+
+
+B. Why is it wasteful to allocate 1000 int variables individually using malloc
+   or new ?
+
+  1000x  ... = new int;
+
+vs.
+
+  1x     ... = new int[1000];
+
+C. Using typedef define type cptr2cint of a constant pointer to a constant int
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solutions:
+
+A. new/delete are easier to use: no need to compute the size of the memory
+   block and no need to cast the returned pointer to the type we need
+
+   Also - even more importantly - new calls the constructor of objects, and
+   delete calls the destructor. This makes programming with structs in C++
+   much safer. We will see how this works soon
+
+
+B. Each malloc/new operation creates memory overhead (at least 24 bytes per
+   call on the lab machines) because the memory manager needs to keep track of
+   empty memory blocks and block lengths
+
+   Thus, allocating 1,000 ints individually would require 1000 * (4 + 24) =
+   28,000 bytes, whereas an array of 1,000 ints only requires 1,000 * 4 + 24 =
+   4,024 bytes
+
+
+C.  typedef const int * const cptr2cint;
+
+    // in C++ use: using cptr2cint = const int * const;
+    
+    Application: 
+
+    cptrcint p = new int;
+    p = nullptr; // compile time error: pointer is constant
+    *p = 0;      // compile time error: what pointer points to is constant
+
+    (seems useless if we can't set *p to a specific value. Can't we?)
+
+
+============================================================================
+
+Problem 6
+
+ Fix the following code:
+
+   // return pointer to initialized array of 100 ints
+
+   int *foo()
+   {
+     const int N = 100;
+     int A[N], *p = A, *e = A+N;
+
+     // initialize A[] with 0s
+
+     while (p < e) {
+       *p++ = 0;
+     }
+     return p;  // return new array
+   }
+
+
+   int main(int argc, char *argv[])
+   {
+     // print all arguments
+
+     for (int i=1; i <= argc; ++i) {
+       printf("arg %d : %s\n", i, argv[i])
+     }
+     delete [] argv;    // arguments no longer needed
+
+     int *p = foo();
+     printf("%d", *p);
+     free(p);           // array no longer needed
+
+     return 0;
+   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  Sol:  - index bound violation in main:  i must stay < argc
+
+        - delete [] argv; is WRONG 
+
+          We don't know how argv was allocated (by malloc or new [] ?).
+          Therefore, we don't know how to free the array (free or delete []?)
+
+          Even if we knew, we have no business freeing the memory, because
+          main does not own it. The caller of main created argv, so it's the
+          caller's job to free the array
+
+        - foo returns a pointer to an int following the array!
+
+          return A; would fix that, ... BUT ...
+
+          then foo returns a pointer to a local variable (A), which is WRONG.
+          Local variables are destroyed upon function exit!
+
+        - So, there is no way around allocating A with 
+
+          int *A = new int[N];
+          
+          and returning it at the end: return A;
+
+        - if we do this, then main needs to delete the allocated memory
+          with delete [] p;
+
+============================================================================
+
+Problem 7
+
+Write a program that sorts the arguments passed to main - except for the
+program name - in non-decreasing lexicographic order and prints them to
+standard output
+
+Example:  ./a.out cd aa b aaa 
+Output:   aa aaa b cd
+
+Hint: first step: adapt selection sort for integers to C-strings using
+
+  int strcmp(const char s1[], const char s2[]);
+  // returns 0 if s1 and s2 are equal strings
+  // returns >0 if string s1 is lexicographically > string s2  ("foo" > "bar")
+  // return  <0 if string s1 is lexicographically < string s2  ("bar" < "foo")
+
+// returns index of maximum element in A[]
+// pre-condition: N > 0
+int indexOfMax(int A[], int N)
+{
+  assert(N > 0);  
+  int max_ind = 0;    // current index of max.
+  int max_val = A[0]; // current maximum value
+
+  for (int i=1; i < N; ++i) {
+    // can't use A[i] > max_val because this
+    // would compare addresses!
+    if (A[i] > max_val) {
+      // found a bigger element => update
+      max_val = A[i];
+      max_ind = i;
+    }
+  }
+  return max_ind;
+}
+
+// swaps two char pointers
+void swap(int &x, int &y)
+{
+  int tmp = x; x = y; y = tmp;
+}
+
+// selection sort: non-decreasing order
+void sort(int A[], int N)
+{
+  for (int l=N; l > 1; --l) {
+    // swap max. element in A[0..l-1] with A[l-1]
+    swap(A[indexOfMax(A, l)], A[l-1]);
+  }
+}
+
+
+
+Solution: see ./sortint.c and ./sortargv.c
+
+
+============================================================================
+
+Problem 8
+
+Consider the following C-library functions:
+
+void *memcpy(void *dst, const void *src, size_t num);
+
+   Copies num bytes from src to dst quickly.
+   Memory areas must not overlap!
+
+void *memset(void *ptr, int value, size_t num);
+
+  Copies value (treated as unsigned char) into num bytes starting at ptr
+
+
+A. Using those two functions and new/delete implement C++ functions
+
+  // copy src to dst array (n > 0 elements)
+  void copy(double dst[], const double src[], int n);
+
+  // set n > 0 array elements to 0.0 (= 8 zero bytes each) 
+  void clear(double A[], int n); 
+
+  // allocate and initialize array of n > 0 doubles with 0.0
+  double *alloc_array(int n);
+
+  // free double array p points to and set p to 0 as
+  // a safeguard to prevent subsequent array accesses
+  void free_array(...p...);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+  // copy src to dst array
+  void copy(double dst[], const double src[], int n)
+  {
+    assert(n > 0);
+    memcpy(dst, src, n * sizeof(dst[0]));
+  }
+
+  // set array elements to 0.0 (= 8 zero bytes)
+  void clear(double A[], int n)
+  {
+    assert(n > 0);
+    memset(A, 0, n * sizeof(A[0]));
+  }
+
+  // allocate and initialize array of n doubles with 0.0
+  double *alloc_array(int n)
+  {
+    assert(n > 0);
+    double *p = new double[n];
+    clear(p, n);
+    return p;
+  }
+
+  // free double array p points to and set p to 0 as 
+  // a safeguard to prevent subsequent array accesses
+  void free_array(double *&p)
+  {
+    delete [] p;
+    p = 0;
+  }
+
+============================================================================
+
+
+B. How to implement alloc_array and free_array in C ?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+  double *alloc_array(int n)
+  {
+    assert(n > 0);
+    double *p = malloc(n * sizeof(double));
+    clear(p, n);
+    return p;
+  }
+
+  void free_array(double **p)
+  {
+    free(*p);
+    *p = 0;
+  }
+
+  double *p = alloc_array(100);
+  free_array(&p);
+
+
+============================================================================
+
+Problem 9: Describe at a high level what this mystery function does:
+
+  void mystery(char *p, const char *q)
+  {
+    strcpy(p + strlen(p), q);
+  }
+
+  How does it work in detail?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Solution:
+
+  This function appends string q to string p
+
+  It's an implementation of strcat
+
+  Details?
+
+
+============================================================================
+
+Problem 10
+
+
+  // code review time ...
+
+  bool is_square(int x)
+  {
+    ...
+  }
+
+  int main()
+  {
+    unsigned int y = 12345;
+
+    // unsigned int y = 65535U * 65535U
+
+    bool b = is_square(x);
+    ...
+  }
+
+
+  What happens here?
+  

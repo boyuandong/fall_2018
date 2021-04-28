@@ -1,0 +1,726 @@
+Week 03 (L6/7/8)
+
+Lecture 6 Agenda
+
+- Quiz 2A 
+
+- Quiz 2A Solutions
+
+- Classroom Problems
+
+=========================================================================
+
+[ warmup:
+
+  - what happens here?
+
+    int foo(int x) {
+      return x+1 > x;
+    }
+
+    int main() { foo(5); return 0; }
+
+  - showed how to use compiler option -S to view assembly language
+    representation of programs
+
+  - we also read some assembly code and saw how the compiler optimizes code
+
+  - what happens here?
+
+    int i = 0;
+
+    while (i >= 0) {
+      i += 10000;
+      ...
+    }
+]
+
+
+============================================================================
+
+Q2A Solutions:
+
+1)  
+
+A. Operator Arity:         
+
+   Number of arguments of an operator;     5 * 6 => arity of * is 2
+                                           also known as binary operator
+   
+B. Operator Associativity:
+
+   Order in which expressions involving identical binary operators
+   (or ones on the same precedence level) are evaluated:
+
+   a - a - a   could be evaluated as  (a - (a - a)) (right-associative)
+                                  or  ((a - a) - a) (left-associative)
+   - is left associative in C
+
+
+B': Operator Precedence
+
+    Defines order in which operators are evaluated, i.e. how strong they bind
+    compared to others
+
+    a + b * c    evaluated: a + (b * c)       because * >  +
+    a - b + c    evaluated: (a - b) + c       same level => 
+                                              use associativity (ltr)
+    a / b + c    evaluated: (a / b) + c       because / > +
+    a = b = c+1  evaluated: a = (b = (c + 1)) because + > = and 
+                                               = is right-associative
+
+C. Function 
+
+   A piece of code that can be called from other locations. Parameters can be
+   passed to functions to compute some useful result which is then returned
+   back to the caller.
+
+D. In C parameters are passed by value, i.e. parameters are copied into local
+   variables. Operations on those variables will have no affect on the
+   variables the function is called with. By contrast, variables passed by
+   reference can be changed in the function.
+
+=========================================================================
+
+2) Describe the C function call mechanism in detail using the following
+   example. What is stored, where, when?
+
+   int foo(int x) {
+     return x;
+   }
+
+   int a = foo(10);
+
+   (see p. 57 in notes)
+  
+  1. Argument 10 is pushed to stack, followed by return address
+  2. In foo(), x=10 is stored in a register used for returning the function
+     value
+  3. return address and parameter are popped from stack
+  4. execution continues at return address (stores 10 in variable a)
+
+============================================================================
+
+3) Output of the following program?
+
+  int x, y = 10;
+
+  for (x = 10; x <= 20; x += 3) {         
+    printf("%d %d\n", x, --y);            
+  }
+
+  do {
+    printf("%d %d\n", x, y);
+    y--; x /= 2;
+  } while (y > 0);
+
+
+
+  loop 1: x = 10, 13, 16, 19;  y pre-decrement
+
+   10 9
+   13 8
+   16 7
+   19 6
+
+  after loop 1 is done, x == 22    
+
+  loop 2:  x divided by 2 rounded down
+
+   22 6
+   11 5
+   5  4
+   2  3
+   1  2
+   0  1
+
+============================================================================
+
+Problem 1
+
+  A) How to return 3 values from a function?
+
+  B) How to make a function parameter read-only, i.e. code in the function's
+     body can't change it
+
+  C) How to exit from two nested loops?
+
+     for (int i=0; i < N; ++i) {
+       for (int j=0; j < N; ++j) {
+         ...
+         if (done) {
+           ?
+         }
+       }
+     }
+    
+     // continue here when done
+
+  D) Expressions
+
+     - bool a = b > c && c < d;   // ( ) needed to force evaluation of
+                                  // && to be last?
+
+     - bool a = b + 2 >= c - 3    // ( ) needed to force evaluation of
+                                     >= to be last?
+
+     - a += b + 3 += 5;           // legal?
+
+     - int x = a + b * c - d / 2 > 0 && a > 0 || b < 0;  // eval. order? 
+
+==========================================================================
+
+
+
+
+
+
+
+
+Sol:
+
+A) How to return 3 values from a function?
+
+   Call-by-reference! Example:
+
+   int foo(int &a, int &b) 
+   {
+     a = 5;
+     b = 6;
+     return 7;
+   }
+
+   int x, y, z;
+
+   z = foo(x, y);
+
+   // x = 5, y = 6, z = 7
+
+
+B) How to make a function parameter read-only, i.e. code in the function's
+   body can't change it.
+
+   Use the const qualifier:
+
+   int foo(const int x) 
+   { 
+     x = 5; // compiler complains here because x is read-only
+   }
+
+
+C) How to exit from two nested loops?
+
+   Use goto, which otherwise is DISCOURAGED:
+
+   for (int i=0; i < N; ++i) {
+     for (int j=0; j < N; ++j) {
+       ...
+       if (done) {
+         goto done_label;
+       }
+     }
+   }
+    
+   done_label: ; 
+
+   // continue here when done
+
+
+D) Expressions
+
+  - bool a = b > c && c < d;   // is ( ) needed to force evaluation of
+                               // && to be last?
+
+   No, precedence of && is lower than > and <, but higher than =
+
+
+
+  - bool a = b + 2 >= c - 3    // is ( ) needed to force evaluation of
+                               // >= to be last?
+
+   No, precedence of >= is lower than + and -, but higher than =
+
+
+
+  - a += b + 3 += 5;           // legal?
+
+    No, b + 3 += 5 is evaluated first. This, however, is illegal because
+    b + 3 is not a variable (lvalue)
+
+
+
+  - int x = a + b * c - d / 2 > 0 && a > 0 || b < 0;  // eval. order? 
+
+    int x = ((a + (b * c) - (d / 2)) > 0) && ((a > 0) || (b < 0));
+
+    Algorithm: scan expression from left to right and only execute an operator
+               when encountering one with lower or equal precedence than a
+               predecessor (obeying associativity). Otherwise, delay execution
+               (use stack to keep track of delayed operations/values)
+
+    See http://en.wikipedia.org/wiki/Operator-precedence_parser for details
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+============================================================================
+
+Lecture 7 Agenda
+
+- more Quiz solutions
+- problems
+
+=========================================================================
+
+[ went over arity,precedence,associativity definitions and Quiz problem 3 ]
+
+
+More Problems:
+
+
+2. What is the value of x at the end?
+
+   int x = 1, y = 2;
+
+   switch (y) {
+     case 1:  x += 1;
+     case 2:  x += 2;
+     case 3:  x += 3;
+     default: x += 4;
+   }
+
+   Is anything wrong with this kind of code?
+
+3. Write a for loop that prints 1000 down to 2 (inclusive) in steps of 2 
+
+4. Convert the loop in 2. into a do..while loop
+
+
+
+
+
+
+
+
+
+
+
+
+
+============================================================================
+
+Solutions:
+
+2. What is the value of x at the end?
+
+   int x = 1, y = 2;
+
+   switch (y) {
+     case 1:  x += 1;
+     case 2:  x += 2;
+     case 3:  x += 3;
+     default: x += 4;
+   }
+
+   x = 10.
+
+   This code is seriously broken. It suffers from the "fall-through" effect
+   which is caused by cases not being terminated with break. Here, the 
+   program will execute ALL lines starting with x += 2;
+
+   Much better equivalent code (assuming we intended increments 10, 9, 7, 4):
+
+   switch (y) {
+     case 1:
+       x += 10;
+       break;
+
+     case 2: 
+       x += 9;
+       break;
+
+     case 3: 
+       x += 7;
+       break;
+
+     default:
+       x += 4;
+       break;
+   }
+
+
+3. Write a for loop that prints 1000 down to 1 (inclusive) in steps of 2
+
+  for (int i=1000; i >= 2; i -= 2) {
+    printf("%d\n", i);
+  }
+
+
+4. Convert the loop in 2. into a do..while loop.
+
+   int i = 1000; 
+   do {
+     printf("%d\n", i);
+     i -= 2;    
+   } while (i >= 2);
+
+   Difference: the loop body is executed at least once irrespective of the
+   start value of i - dangerous. Use a for loop, unless for some reason you
+   need the loop to be executed once
+   
+
+============================================================================
+
+More problems:
+
+5. What is the value of x at the end?
+
+   int x = 5;
+   {
+     int x = 3;
+     ++x;
+   } 
+   ++x;
+
+6. What is the difference between function declarations and function
+   definitions?
+
+7. What do you think will happen when the following function is called:
+
+   void foo() { foo(); }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+============================================================================
+
+Solutions:
+
+5. What is the value of x at the end?
+
+   int x = 5;
+   {
+     int x = 3;   // block-local x
+     ++x;         // now 4
+                  // local x no longer needed
+   } 
+   ++x;           // x = 6 here (different x!)
+
+6. function declaration vs. definition
+
+  A function declaration informs the compiler about how to use the function by
+  naming the return type, function name, and parameter types
+
+  E.g.  int getchar();    
+
+  With this information, the compiler can generate code that calls functions
+
+  Function definitions specify the code that is executed when functions are
+  called
+
+  E.g.:
+
+  int times2(int x) 
+  {
+    return 2*x;
+  }
+
+7. recursive foo:  void foo() { foo(); }
+
+  Calling function foo will consume the entire available stack space, which is
+  finite and usually small (a few megabytes). With each call at least the
+  return address needs to be saved on the stack. The programm will be
+  terminated by the operating system
+
+==========================================================================
+
+Lecture 8
+
+Agenda:
+
+ - more problems
+ 
+============================================================================
+
+Problem 8 (base 2 representation)
+
+  a) Write a C++ program that prints a given unsigned integer x in
+     reversed base 2 representation. E.g.
+
+              output
+     x = 0    0
+     x = 4    001      2 ² 
+     x = 8    0001     2 ³ 
+     x = 17   10001    2⁰ + 2⁴
+     x = 30   01111    2 ¹+ 2 ²+ 2 ³+ 2⁴ 
+
+     Hints: 
+
+      - internally numbers are represented as bit sequences.
+        Think of them as decimal numbers with the constraint
+        that digits are restricted to 0 and 1 (rather than 0..9).
+        Maninpulating binary numbers (like addition and multiplication) is
+        analogous to decimal numbers (base 2 rather than base 10)
+
+      - how do you determine whether a number is even or odd?
+
+  b) Write a C++ program that prints a given unsigned integer x in base 2
+     representation. E.g.
+
+              output
+     x = 0    0
+     x = 4    100
+     x = 8    1000
+     x = 16   10000
+     x = 30   11110
+
+     Hint: recursion
+
+===========================================================================
+
+Sol: see base2?.c
+
+============================================================================
+
+Problem 9 (rotation)
+
+  Write a C++ program that rotates 3 given int parameters to the right. I.e.,
+
+  int x = 1, y = 2, z = 3;
+
+  rotate_right(x, y, z);   // now x = 3, y = 1, z = 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Sol: Use references because the function has side effects
+
+   void rotate_right(int &a, int &b, int &c) 
+   {	
+     int tmp = a;  // saves previous a
+     a = c;
+     c = b;
+     b = tmp;      // stores it to b
+   }
+
+   int x = 1, y = 2, z = 3;
+
+   Calling rotate_right(x, y, z) does this:
+
+     tmp = 1;
+     x = 3;
+     z = 2;
+     y = tmp; // 1
+
+   So, the effect is:  x = 3, y = 1, z = 2;
+
+============================================================================
+
+Problem 10
+
+a) What does the following function compute?
+
+#include <assert.h>
+
+// pre-cond: b >= 0
+
+int p(int a, int b)
+{
+  assert(b >= 0);  // check pre-condition (terminates program if false)
+  
+  if (b == 0) {
+    return 1;
+  }
+  return a * p(a, b-1);
+}
+
+Hint: run p on small inputs and try to generalize its results
+
+
+
+
+
+
+
+
+
+
+
+
+Sol:
+
+a b p(a,b)
+0 0 1
+1 0 1
+1 1 1
+2 1 2
+2 2 4
+3 2 9
+                  b
+Claim: p(a, b) = a
+                                      0
+1. it works for b = 0 (when defining a  = 1 for all a)
+
+2. if it works for b, then it also works for b+1
+
+[ 1.+2. => it works for all b ≥ 0 ]
+
+Show 2:
+                    b
+  Assume p(a, b) = a   for some b
+                                                          b    b+1
+  Then by code inspection: p(a, b+1) = a * p(a, b) = a * a  = a 
+
+(This proof technique is called mathematical induction)
+
+
+------
+
+b) Give an iterative implementation of function p
+   (i.e., the function can't call itself and only uses loops)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Sol:
+
+#include <assert.h>
+
+int p(int a, int b)
+{
+  assert(b >= 0);
+
+  int prod = 1;
+  
+  while (b-- > 0) {
+    prod *= a;
+  }
+  return prod;
+}
+
+
+
+------
+
+c) What does the following function compute?
+
+  #include <assert.h>
+
+  // pre-cond: b >= 0
+
+  int q(int a, int b)
+  {
+    assert(b >= 0);
+
+    if (b == 0) {
+      return 1;
+    }
+
+    if (b % 2) {
+      int r = q(a, (b-1)/2);
+      return a*r*r;
+    }
+
+    int r = q(a, b/2);
+    return r*r;
+  }
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Sol:
+
+                    b
+  Claim: q(a, b) = a
+
+  Why?
+                        0 
+        b = 0:   a   = 1
+
+                  b       b/2  2
+        b even:  a   = ( a    )
+  
+                  b           (b-1)/2  2
+        b odd:   a   = a * ( a        )
+
+        
+  Same result as p, but much faster (logarithmic time (in b) rather than linear)
+
+  See CMPUT 204 for a proof
+  
+  This method is called "fast exponentiation"
